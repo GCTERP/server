@@ -5,6 +5,8 @@ const { Schema, model } = mongoose
 const InternalsSchema = new Schema({
     
     enrollmentId: { type: Schema.Types.ObjectId, required: true, ref: 'Enrollment' },
+    
+    category: { type: String, required: true },
 
     type: { type: String, required: true },
 
