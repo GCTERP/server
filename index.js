@@ -4,9 +4,6 @@ import express from "express"
 import dotenv from "dotenv"
 import cors from "cors"
 
-dotenv.config()
-const app = express()
-
 import admin from "./routes/admin.js"
 import hod from "./routes/hod.js"
 import pc from "./routes/pc.js"
@@ -16,10 +13,13 @@ import ci from "./routes/ci.js"
 import student from "./routes/student.js"
 import auth from "./routes/auth.js"
 
+dotenv.config()
+const app = express()
+
 // Middleware
 app.use(express.json())
-app.use(expressFile)
-app.use(cors)
+app.use(expressFile())
+app.use(cors())
 
 // Request Logs
 app.use('/', (req, res, next) => {
