@@ -12,7 +12,7 @@ const COAttainmentSchema = new Schema({
 
     total: { type: Number, required: true },
 
-    obtained: { type: Number, required: true }
+    obtained: { type: Number, required: true },
 
 }, { collection: "COAttainment", timestamps: true })
 

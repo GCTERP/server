@@ -16,7 +16,19 @@ const FacultySchema = new Schema({
 
     isActive: { type: Boolean, default: true },
 
-    role: { type: [String], required: true },
+    admin: { type: Boolean, default: false },
+
+    cfa: { type: Boolean, default: false },
+
+    hod: { type: Boolean, default: false },
+
+    pc: { type: Boolean, default: false },
+
+    ttc: { type: Boolean, default: false },
+
+    fa: { type: Boolean, default: false },
+
+    ci: { type: Boolean, default: false },
 
     primaryRole: { type: String, required: true },
 

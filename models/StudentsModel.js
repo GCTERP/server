@@ -18,7 +18,7 @@ const StudentsSchema = new Schema({
 
     currentSemester: { type: Number, required: true },
 
-    email: { type: String },
+    email: { type: String, required: true },
 
     personalEmail: { type: String },
 
@@ -27,6 +27,8 @@ const StudentsSchema = new Schema({
     firstName: { type: String, required: true },
 
     lastName: { type: String, required: true },
+
+    dob: { type: Schema.Types.Date, required: true },
 
     isCredentialCreated: { type: Boolean, default: false },
 

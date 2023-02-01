@@ -10,7 +10,7 @@ export const excelToJson = (filename) => {
     
     const result = data.map(doc => expandObject(doc))
 
-    return result
+    return result.map(doc => rectifyObject(doc))
 }
 
 export const jsonToExcel = (data) => {
@@ -69,4 +69,25 @@ function shrinkObject(doc, str = "", result = {}) {
         } else result[newKey] = doc[key]
 
     }   return result
+}
+
+function rectifyObject(obj) {
+
+    for(let key of Object.keys(obj)) {
+
+        if(typeof(obj[key]) == typeof({})) {
+        
+            if(obj[key][0]) {
+        
+                let result = []
+
+                for(let idx of Object.keys(obj[key]))
+
+                    result.push(obj[key][idx])
+
+                obj[key] = result
+        
+            } else rectifyObject(obj[key])
+        }
+    }   return obj
 }

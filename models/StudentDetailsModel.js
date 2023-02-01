@@ -8,9 +8,7 @@ const StudentDetailsSchema = new Schema({
 
     NADId: { type: String },
 
-    dob: { type: Schema.Types.Date, required: true },
-
-    gender: { type: String, required: true },
+    gender: { type: String },
 
     father: {
     
@@ -45,15 +43,15 @@ const StudentDetailsSchema = new Schema({
         income: { type: String }
     },
 
-    permanentAddress: { type: String, required: true },
+    permanentAddress: { type: String },
 
     temporaryAddress: { type: String },
 
-    aadhaar: { type: String, required: true },
+    aadhaar: { type: String },
 
     doj: { type: Schema.Types.Date },
 
-    tenth: {
+    sslc: {
 
         school: { type: String },
 
@@ -66,11 +64,13 @@ const StudentDetailsSchema = new Schema({
         passingYear: { type: Number }
     },
 
-    twelveth: {
+    hsc: {
 
         school: { type: String },
 
         studyPeriod: { type: String },
+
+        group: { type: String },
 
         board: { type: String },
 

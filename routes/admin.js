@@ -1,6 +1,6 @@
 import express from "express"
 
-import {  } from "../controllers/AdminController.js"
+import { uploadStudents } from "../controllers/AdminController.js"
 
 const router = express.Router()
 
@@ -13,7 +13,7 @@ const router = express.Router()
 
 
 ///////////////////////  STUDENTS MODULE ///////////////////////
-
+router.post("/upload/students", uploadStudents)
 
 
 ///////////////////////  FACULTY MODULE ///////////////////////

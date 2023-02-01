@@ -34,7 +34,7 @@ const CurriculumSchema = new Schema({
 
     },
 
-    semster: { type: Number, required: true },
+    semester: { type: Number, required: true },
 
     regulation: { type: Number, required: true },
 
