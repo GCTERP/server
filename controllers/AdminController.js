@@ -25,10 +25,27 @@ export const uploadStudents = async (req, res) => {
 
         await file.mv("./trash/" + time + ".xlsx")
 
-        let data = excelToJson("./trash/" + time + ".xlsx"), create = [], update = []
+        let load = excelToJson("./trash/" + time + ".xlsx"), create = [], update = [], trash = [], data = []
 
-        let result = await StudentsModel.find({ register: { $in: data.map(doc => doc.register) } }, { register: 1 })
+        fs.unlinkSync("./trash/" + time + ".xlsx")
 
+        let result = await StudentsModel.find({ register: { $in: load.map(doc => doc.register) } }, { register: 1 })
+
+        let required = [ "register", "regulation", "batch", "degree", "branch", "currentSemester", "email", "firstName", "lastName", "dob" ]
+
+        // Filter valid documents
+        for(let doc of load){
+            let valid = true
+            for(let field of required)
+                if(!doc[field]) {
+                    trash.push({...doc})
+                    valid = false
+                    break
+                }
+            valid && data.push({...doc})
+        }
+
+        // Find existing documents
         for(let doc of data) {
             let flag = true
             for(let rdoc of result) {
@@ -48,9 +65,14 @@ export const uploadStudents = async (req, res) => {
             for(let doc of update)
                 await studentUpdation(doc)
 
-        res.status(200).send(`SUCCESS: ${data.length} documents uploaded, ${create.length} documents created, ${update.length} documents updated`)
-
-        fs.unlinkSync("./trash/" + time + ".xlsx")
+        let documents = {
+            total: load.length,
+            created: create.length,
+            update: update.length,
+            trash: trash.length
+        } 
+        
+        res.status(200).json({ documents, trash: [...trash] })
 
     } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
