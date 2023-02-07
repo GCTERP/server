@@ -28,7 +28,7 @@ const StudentsSchema = new Schema({
 
     lastName: { type: String, required: true },
 
-    dob: { type: Schema.Types.Date, required: true },
+    dob: { type: Date, required: true },
 
     isCredentialCreated: { type: Boolean, default: false },
 
