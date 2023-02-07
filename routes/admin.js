@@ -1,6 +1,6 @@
 import express from "express"
 
-import { uploadStudents } from "../controllers/AdminController.js"
+import { getStudents, uploadStudents } from "../controllers/AdminController.js"
 
 const router = express.Router()
 
@@ -13,6 +13,8 @@ const router = express.Router()
 
 
 ///////////////////////  STUDENTS MODULE ///////////////////////
+router.get('/', getStudents)
+
 router.post("/upload/students", uploadStudents)
 
 

@@ -17,6 +17,17 @@ import { excelToJson } from "../utilities/excel-parser.js"
 
 
 ///////////////////////  STUDENTS MODULE ///////////////////////
+export const getStudents = async (req, res) => {
+
+    try {
+
+        let result = await StudentsModel.find({})
+
+        res.status(200).json(result)
+
+    }   catch(err) { res.status(400).send("Request Failed: " + err.message) }
+}
+
 export const uploadStudents = async (req, res) => {
 
     try {
