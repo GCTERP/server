@@ -4,7 +4,7 @@ const { Schema, model } = mongoose
 
 const StudentsSchema = new Schema({
     
-    register: { type: String, required: true },
+    register: { type: String, required: true, unique: true },
 
     regulation: { type: Number, required: true },
 
@@ -18,7 +18,7 @@ const StudentsSchema = new Schema({
 
     currentSemester: { type: Number, required: true },
 
-    email: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
 
     personalEmail: { type: String },
 
@@ -28,7 +28,7 @@ const StudentsSchema = new Schema({
 
     lastName: { type: String, required: true },
 
-    dob: { type: Date, required: true },
+    dob: { type: String, required: true },
 
     isCredentialCreated: { type: Boolean, default: false },
 

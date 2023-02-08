@@ -4,9 +4,9 @@ const { Schema, model } = mongoose
 
 const FacultySchema = new Schema({
     
-    facultyId: { type: String, required: true },
+    facultyId: { type: String, required: true, unique: true },
 
-    type: { type: String, required: true },
+    type: { type: String },
 
     email: { type: String, required: true },
 
@@ -36,7 +36,7 @@ const FacultySchema = new Schema({
 
     firstName: { type: String, required: true },
 
-    lastName: { type: String },
+    lastName: { type: String, required: true },
 
     address: { type: String },
 

@@ -49,7 +49,7 @@ const StudentDetailsSchema = new Schema({
 
     aadhaar: { type: String },
 
-    doj: { type: Schema.Types.Date },
+    doj: { type: String },
 
     sslc: {
 
