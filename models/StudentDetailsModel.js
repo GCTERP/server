@@ -4,7 +4,7 @@ const { Schema, model } = mongoose
 
 const StudentDetailsSchema = new Schema({
     
-    studentId: { type: Schema.Types.ObjectId, required: true, ref: 'Student' },
+    studentId: { type: Schema.Types.ObjectId, required: true, ref: 'Students' },
 
     NADId: { type: String },
 
