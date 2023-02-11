@@ -34,7 +34,9 @@ const StudentsSchema = new Schema({
 
     type: { type: String, default: "regular" },
 
-    status: { type: String, default: "active" }
+    status: { type: String, default: "active" },
+
+    isActive: { type: Boolean, default: false },
 
 }, { collection: "Students", timestamps: true })
 

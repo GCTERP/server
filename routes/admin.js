@@ -1,6 +1,6 @@
 import express from "express"
 
-import { getFaculty, getStudents, updateFaculty, updateStudents, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
+import { getFaculty, getFacultyUser, getStudents, getStudentUsers, manageFacultyAccount, manageStudentAccount, updateFaculty, updateStudents, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
 
 const router = express.Router()
 
@@ -9,8 +9,13 @@ const router = express.Router()
 
 
 ///////////////////////  USERS MODULE ///////////////////////
+router.get("/users/students", getStudentUsers)
 
+router.post("/users/manage/students", manageStudentAccount)
 
+router.get("/users/faculty", getFacultyUser)
+
+router.post("/users/manage/faculty", manageFacultyAccount)
 
 ///////////////////////  STUDENTS MODULE ///////////////////////
 router.get("/students", getStudents)

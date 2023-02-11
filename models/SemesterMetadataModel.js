@@ -20,20 +20,26 @@ const SemesterMetadataSchema = new Schema({
     
     },
 
-    internals: [
-        {
+    tutorial: {
 
-            type: { type: String, required: true },
+        marks: { type: Number, required: true },
         
-            marks: { type: Number, required: true },
-        
-            count: { type: Number, required: true },
-        
-            contribution: { type: Number, required: true }
-        
-        }
-    ],
+        count: { type: Number, required: true },
+    
+        contribution: { type: Number, required: true }        
 
+    },
+
+    assignment: {
+
+        marks: { type: Number, required: true },
+        
+        count: { type: Number, required: true },
+    
+        contribution: { type: Number, required: true }        
+
+    },
+    
     schedule: {
 
         opened: { type: Boolean, default: false },
