@@ -1,13 +1,13 @@
 import express from "express"
 
-import { addBatchToCalendar, addWorkingDay, createCalendar, declareHoliday, getDatesFrom, getFaculty, getFacultyUser, getStudents, getStudentUsers, manageFacultyAccount, manageSaturday, manageStudentAccount, updateFaculty, updateStudents, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
+import {  addWorkingDay, createCalendar, createMetadata, declareHoliday, getAllDates, getFaculty, getFacultyUser, getStudents, getStudentUsers, manageBatchInCalendar, manageFacultyAccount, manageSaturday, manageStudentAccount, updateFaculty, updateStudents, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
 
 const router = express.Router()
 
 ///////////////////////  ADMIN MODULE ///////////////////////
-router.post("/calendar/create", createCalendar)
 
-router.post("/calendar/addbatch", addBatchToCalendar)
+// Calendar Module
+router.post("/calendar/create", createCalendar)
 
 router.post("/calendar/manage/saturday", manageSaturday)
 
@@ -15,7 +15,12 @@ router.post("/calendar/holiday", declareHoliday)
 
 router.post("/calendar/workingday", addWorkingDay)
 
-router.get("/calendar", getDatesFrom)
+router.post("/calendar/batch/manage", manageBatchInCalendar)
+
+router.get("/calendar", getAllDates)
+
+// SemesterMetadata Module
+router.post("/semestermeta/create", createMetadata)
 
 
 ///////////////////////  USERS MODULE ///////////////////////

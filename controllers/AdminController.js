@@ -8,6 +8,7 @@ import { excelToJson } from "../utilities/excel-parser.js"
 import { FacultyModel } from "../models/FacultyModel.js"
 import { UsersModel } from "../models/UsersModel.js"
 import { CalendarModel } from "../models/CalendarModel.js"
+import { SemesterMetadataModel } from "../models/SemesterMetadataModel.js"
 
 
 ///////////////////////  ADMIN MODULE ///////////////////////
@@ -19,56 +20,16 @@ export const createCalendar = async (req, res) => {
 
         let { from, to, isSaturdayHoliday } = req.body
 
-        let dates = generateCalendar(new Date(from), new Date(to), isSaturdayHoliday)
+        from = new Date(from)
+        to = new Date(to)
 
-        await CalendarModel.create(dates)
+        let dates = generateCalendar(from, to, isSaturdayHoliday)
 
-        res.status(200).send("Success")
+        let check = await CalendarModel.find({ date: { $in:[from, to] } })
 
-    } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
-}
+        if(check.length==0)  await CalendarModel.create(dates) 
+        else res.status(200).send("Date already exist in calendar")
 
-export const addBatchToCalendar = async (req, res) => {
-
-    try {
-
-        let { batch, from, to, order, workingDaysPerWeek, proceedDayOrder = 1 } = req.body
-
-        let data = await CalendarModel.find({ date: { $gte: new Date(from), $lte: new Date(to) }, isWorkingDay: true }, { createdAt: 0, updatedAt: 0, __v: 0 }).sort({ date: 'asc' })
-
-        if (order == "Week") {
-
-            for (let doc of data) {
-
-                (!doc.batches.includes(batch)) && doc.batches.push(batch)
-                doc.isWorkingDay && doc.order == null && (doc.order = doc.day)
-
-                let _id = doc._id
-                delete doc._id
-                await CalendarModel.updateOne({ _id: _id }, doc)
-            }
-
-        } else {
-
-            let dayOrder = data[0].order ?? proceedDayOrder
-            for (let doc of data) {
-
-                (!doc.batches.includes(batch)) && doc.batches.push(batch)
-
-                let currentDayOrder = dayOrder
-                if ((dayOrder % workingDaysPerWeek) == 0) {
-                    currentDayOrder = workingDaysPerWeek
-                    dayOrder = 1
-                } else dayOrder++
-
-                doc.order = doc.order ?? currentDayOrder
-
-                let _id = doc._id
-                delete doc._id
-                await CalendarModel.updateOne({ _id: _id }, doc)
-            }
-
-        }
         res.status(200).send("Success")
 
     } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
@@ -115,7 +76,7 @@ export const declareHoliday = async (req, res) => {
 
         let load = req.body
 
-        if (Number(load[0].order) != NaN) {
+        if (isDayOrder) {
 
             let currentOrder = load[0].order
 
@@ -179,19 +140,40 @@ export const addWorkingDay = async (req, res) => {
     } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
 }
 
-export const getDatesFrom = async (req, res) => {
+export const getAllDates = async (req, res) => {
 
     try {
 
-        let { date } = req.body
-
-        let data = await CalendarModel.find({ date: { $gte: new Date(date) }  }, { createdAt: 0, updatedAt: 0, __v: 0 }).sort({ date: 'asc' })
+        let data = await CalendarModel.find({}, { createdAt: 0, updatedAt: 0, __v: 0 }).sort({ date: 'asc' })
 
         res.status(200).json(data)
 
     } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
 
+export const manageBatchInCalendar = async (req, res) => {
+
+    try {
+
+        let { batch, from, to, addBatch } = req.body
+
+        let data = await CalendarModel.find({ date: { $gte: new Date(from), $lte: new Date(to) }, batch: { $contains : batch  }, isWorkingDay: true }, { createdAt: 0, updatedAt: 0, __v: 0 }).sort({ date: 'asc' })
+
+        data = data.map(async doc => {
+
+            if(!addBatch){
+                doc.batches = doc.batches.filter( ele => ele != batch )
+                if(doc.batches) (doc.order = null)
+            }else if(!doc.batches.includes(batch)) doc.batches.push(batch)
+            let id = doc._id
+            delete doc._id
+            await CalendarModel.updateOne({_id:id}, doc)
+        } )
+
+        res.status(200).send("Success")
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
 // Generates calendar for given dates
 function generateCalendar(startDate, endDate, isSaturdayHoliday = true) {
 
@@ -217,8 +199,62 @@ function generateCalendar(startDate, endDate, isSaturdayHoliday = true) {
 
 }
 
+export const createMetadata = async (req, res) => {
+
+    try {
+
+        let metaData = req.body
+        let batch = metaData.semester.batch, from = metaData.semester.begin, to = metaData.semester.end, isDayOrder = metaData.schedule.isDayOrder, workingDaysPerWeek = metaData.schedule.workingDaysPerWeek9s
+        
+        //This allots the day order for the batch for the given dates
+        let data = await CalendarModel.find({ date: { $gte: new Date(from), $lte: new Date(to) }, isWorkingDay: true }, { createdAt: 0, updatedAt: 0, __v: 0 }).sort({ date: 'asc' })
+        if (!isDayOrder) {
+            for (let doc of data) {
+                if(!doc.batches.includes(batch)) doc.batches.push(batch)
+                if( doc.isWorkingDay && doc.order == null ) (doc.order = doc.date.getDay())
+
+                let _id = doc._id
+                delete doc._id
+                await CalendarModel.updateOne({ _id: _id }, doc)
+            }
+
+        } else {
+
+            let dayOrder = data[0].order ?? 1
+            for (let doc of data) {
+
+                if(!doc.batches.includes(batch)) doc.batches.push(batch)
+
+                let currentDayOrder = dayOrder
+                if ((dayOrder % workingDaysPerWeek) == 0) {
+                    currentDayOrder = workingDaysPerWeek
+                    dayOrder = 1
+                } else dayOrder++
+
+                doc.order = doc.order ?? currentDayOrder
+
+                let _id = doc._id
+                delete doc._id
+                await CalendarModel.updateOne({ _id: _id }, doc)
+            }
+
+        }
+        //Creates a doc in semester metadata
+        await SemesterMetadataModel.create(metaData)
+
+        res.status(200).send("Semester metadata created successfully!")
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+export const updateMetadata = async (req, res) => {
+
+    try {
 
 
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
 
 ///////////////////////  USERS MODULE ///////////////////////
 export const getStudentUsers = async (req, res) => {
@@ -227,7 +263,7 @@ export const getStudentUsers = async (req, res) => {
 
         let { batch } = req.body
 
-        // Finds students by batch and returning the result with onlt required fields
+        // Finds students by batch and returning the result with only required fields
         let students = await StudentsModel.find({ batch }, { __v: 0, createdAt: 0, updatedAt: 0, regulation: 0, degree: 0, dob: 0 })
 
         res.status(200).json(students)
