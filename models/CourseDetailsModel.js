@@ -8,9 +8,11 @@ const CourseDetailsSchema = new Schema({
 
     semester: { type: Number, required: true },
 
-    facultyId: { type: Schema.Types.ObjectId, required: true, ref: 'Faculty' },
+    facultyId: { type: Schema.Types.ObjectId, ref: 'Faculty' },
 
-    courseCode: { type: Schema.Types.ObjectId, required: true, ref: 'Curriculum' },
+    courseId: { type: Schema.Types.ObjectId, required: true, ref: 'Curriculum' },
+
+    courseCode: { type:String, required:true},
 
     type: { type: String, required: true },
 
@@ -21,6 +23,14 @@ const CourseDetailsSchema = new Schema({
     groupNo: { type: Number, default: 1 },
 
     schedule: { type: [Number] },
+
+    newSchedule: {
+        
+        effectiveDate: { type:Schema.Types.Date },
+        
+        schedule: { type: [Number] }
+    
+    },
 
     freeze: {
 

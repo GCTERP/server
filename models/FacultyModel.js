@@ -33,6 +33,8 @@ const FacultySchema = new Schema({
     primaryRole: { type: String, required: true },
 
     branch: { type: String, required: true },
+    
+    title: { type: String, required:true },
 
     firstName: { type: String, required: true },
 

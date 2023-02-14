@@ -1,6 +1,6 @@
 import express from "express"
 
-import {  } from "../controllers/TTCController.js"
+import { getdailyjob, getEnrollment, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable } from "../controllers/TTCController.js"
 
 const router = express.Router()
 
@@ -26,7 +26,14 @@ const router = express.Router()
 
 /////////////////////// TIMETABLE MODULE ///////////////////////
 
-
+router.get("/staff", getStaff);
+router.post("/staff", postStaff);
+router.get("/timetable", getTimetable);
+router.post("/timetable", postTimetable);
+router.get("/ut", getUt);
+router.get("/groups", getGroups);
+router.post("/groups",postGroups);
+router.get("/dailyjob", getdailyjob)
 
 /////////////////////// ATTENDANCE MODULE ///////////////////////
 
