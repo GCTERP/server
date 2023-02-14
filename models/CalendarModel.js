@@ -10,9 +10,11 @@ const CalendarSchema = new Schema({
 
     isWorkingDay: { type: Boolean, default: true },
 
+    isDayOrder: { type: Boolean, default: false },
+
     batches: { type: [Number], default: null },
 
-    order: { type: String, default: null },
+    order: { type: Number, default: null },
 
     reason: { type: String, default: null },
    
