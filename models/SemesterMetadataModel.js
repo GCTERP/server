@@ -6,6 +6,10 @@ const SemesterMetadataSchema = new Schema({
     
     date: { type: Schema.Types.Date, required: true },
 
+    sem: { type: Number, required: true },
+    
+    batch: { type: Number, required: true },
+
     ut: {
 
         count: { type: Number },
@@ -74,12 +78,8 @@ const SemesterMetadataSchema = new Schema({
 
         begin: { type: Schema.Types.Date },
     
-        end: { type: Schema.Types.Date },
-    
-        sem: { type: Number },
-    
-        batch: { type: Number }
-    
+        end: { type: Schema.Types.Date }
+
     },
 
     valueAddedCourse: [

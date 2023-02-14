@@ -26,7 +26,7 @@ const MasterTimetableSchema = new Schema({
 
     marked: { type: Number, default: 0 },
 
-    freeze: { type: Boolean, default: false }
+    freeze: { type: Schema.Types.Date, required: true}
 
 }, { collection: "MasterTimetable", timestamps: true })
 
