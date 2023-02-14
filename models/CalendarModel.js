@@ -10,7 +10,7 @@ const CalendarSchema = new Schema({
 
     isWorkingDay: { type: Boolean, default: true },
 
-    isDayOrder: { type: Boolean, required: true},
+    isDayOrder: { type: Boolean, default: false },
 
     batches: { type: [Number], default: null },
 

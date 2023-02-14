@@ -12,35 +12,35 @@ const SemesterMetadataSchema = new Schema({
 
     ut: {
 
-        count: { type: Number, required: true },
+        count: { type: Number },
     
-        duration: { type: Number, required: true },
+        duration: { type: Number },
     
-        marks: { type: Number, required: true },
+        marks: { type: Number },
     
-        retestCount: { type: Number, required: true },
+        retestCount: { type: Number },
     
-        contribution: { type: Number, required: true }
+        contribution: { type: Number }
     
     },
 
     tutorial: {
 
-        marks: { type: Number, required: true },
+        marks: { type: Number },
         
-        count: { type: Number, required: true },
+        count: { type: Number },
     
-        contribution: { type: Number, required: true }        
+        contribution: { type: Number }        
 
     },
 
     assignment: {
 
-        marks: { type: Number, required: true },
+        marks: { type: Number },
         
-        count: { type: Number, required: true },
+        count: { type: Number },
     
-        contribution: { type: Number, required: true }        
+        contribution: { type: Number }        
 
     },
     
@@ -48,49 +48,50 @@ const SemesterMetadataSchema = new Schema({
 
         opened: { type: Boolean, default: false },
     
-        periodCount: { type: Number, required: true },
+        periodCount: { type: Number },
     
-        periodDuration: { type: Number, required: true },
+        periodDuration: { type: Number },
         
-        dayOrderType: { type: String, required: true },
+        isDayOrder: { type: Boolean },
     
-        workingDaysPerWeek: { type: Number, required: true }
+        workingDaysPerWeek: { type: Number }
     
     },
 
     freeze: {
 
-        internal: { type: Number, required: true },
+        internal: { type: Number },
     
-        attendance: { type: Number, required: true }
+        attendance: { type: Number }
     
     },
 
     deadline: {
 
-        internal: { type: Schema.Types.Date, required: true },
+        internal: { type: Schema.Types.Date },
     
-        attendance: { type: Schema.Types.Date, required: true }
+        attendance: { type: Schema.Types.Date }
 
     },
 
     semester: {
 
-        begin: { type: Schema.Types.Date, required: true },
+        begin: { type: Schema.Types.Date },
     
         end: { type: Schema.Types.Date }
+
     },
 
     valueAddedCourse: [
         {
 
-            type: { type: String, required: true },
+            type: { type: String },
         
-            regular: { type: Number, required: true },
+            regular: { type: Number },
         
-            lateral: { type: Number, required: true },
+            lateral: { type: Number },
         
-            transfer: { type: Number, required: true }
+            transfer: { type: Number }
         
         }
     ],
@@ -98,18 +99,18 @@ const SemesterMetadataSchema = new Schema({
     facultyAdvisor: [
         {
 
-            branch: { type: String, required: true },
+            branch: { type: String },
         
-            faculty: { type: Schema.Types.ObjectId, required: true, ref: 'Faculty' }
+            faculty: { type: Schema.Types.ObjectId, ref: 'Faculty' }
         
         }
     ],
 
-    condonation: { type: Number, required: true },
+    condonation: { type: Number },
 
     feedback: {
 
-        status: { type: String, required: true },
+        status: { type: String },
     
         start: { type: Schema.Types.Date },
     
@@ -119,7 +120,7 @@ const SemesterMetadataSchema = new Schema({
 
     enrollment: {
 
-        status: { type: String, required: true },
+        status: { type: String },
     
         start: { type: Schema.Types.Date },
     
@@ -129,7 +130,7 @@ const SemesterMetadataSchema = new Schema({
 
     courseRegistration: {
 
-        status: { type: String, required: true },
+        status: { type: String },
     
         start: { type: Schema.Types.Date },
     
@@ -140,9 +141,9 @@ const SemesterMetadataSchema = new Schema({
     addOnEligible: [
         {
 
-            branch: { type: String, required: true },
+            branch: { type: String },
         
-            course: { type: String, required: true }
+            course: { type: String }
         
         }
     ],
