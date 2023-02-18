@@ -204,7 +204,7 @@ export const createMetadata = async (req, res) => {
     try {
 
         let metaData = req.body
-        let batch = metaData.semester.batch, from = metaData.semester.begin, to = metaData.semester.end, isDayOrder = metaData.schedule.isDayOrder, workingDaysPerWeek = metaData.schedule.workingDaysPerWeek9s
+        let batch = metaData.batch, from = metaData.semester.begin, to = metaData.semester.end, isDayOrder = metaData.schedule.isDayOrder, workingDaysPerWeek = metaData.schedule.workingDaysPerWeek9s
         
         //This allots the day order for the batch for the given dates
         let data = await CalendarModel.find({ date: { $gte: new Date(from), $lte: new Date(to) }, isWorkingDay: true }, { createdAt: 0, updatedAt: 0, __v: 0 }).sort({ date: 'asc' })
