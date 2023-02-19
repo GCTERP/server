@@ -1,6 +1,6 @@
 import express from "express"
 
-import { getdailyjob, getEnrollment, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable } from "../controllers/TTCController.js"
+import { getdailyjob, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable } from "../controllers/TTCController.js"
 
 const router = express.Router()
 

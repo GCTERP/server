@@ -3,6 +3,7 @@ import mongoose from "mongoose"
 import express from "express"
 import dotenv from "dotenv"
 import cors from "cors"
+import { createClient } from "redis"
 
 import admin from "./routes/admin.js"
 import hod from "./routes/hod.js"
@@ -36,6 +37,9 @@ app.use('/fa', fa)
 app.use('/ci', ci)
 app.use('/student', student)
 app.use('/auth', auth)
+
+export const redis = createClient()
+await redis.connect()
 
 mongoose.connect(process.env.MONGO_URI)
 
