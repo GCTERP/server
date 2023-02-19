@@ -6,9 +6,9 @@ export const excelToJson = async (file) => {
 
     let time = Date.now().toString()
 
-    await file.mv("./trash/" + time + ".xlsx")
+    await file.mv("./trash/upload_" + time + ".xlsx")
 
-    const excel = XLSX.readFile("./trash/" + time + ".xlsx")
+    const excel = XLSX.readFile("./trash/upload_" + time + ".xlsx")
 
     const source = excel.Sheets[excel.SheetNames[0]]
 
@@ -16,7 +16,7 @@ export const excelToJson = async (file) => {
     
     let result = data.map(doc => expandObject(doc))
 
-    fs.unlinkSync("./trash/" + time + ".xlsx")
+    fs.unlinkSync("./trash/upload_" + time + ".xlsx")
 
     return result.map(doc => rectifyObject(doc))
 }
@@ -35,7 +35,16 @@ export const jsonToExcel = (data) => {
     
     XLSX.write(workBook, { bookType: "xlsx", type: "binary" })
 
-    XLSX.writeFile(workBook, "data.xlsx")
+    let time = Date.now().toString()
+
+    XLSX.writeFile(workBook, "./trash/download_" + time + ".xlsx")
+
+    let blob = fs.readFileSync("./trash/download_" + time + ".xlsx")
+
+    fs.unlinkSync("./trash/download_" + time + ".xlsx")
+    
+    return blob
+
 }
 
 function expandObject(doc) {

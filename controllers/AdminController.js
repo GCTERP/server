@@ -1,15 +1,65 @@
-import mongoose from "mongoose"
+import mongoose, { set } from "mongoose"
 
 import { StudentsModel } from "../models/StudentsModel.js"
 
 import { StudentDetailsModel } from "../models/StudentDetailsModel.js"
 
-import { excelToJson } from "../utilities/excel-parser.js"
+import { excelToJson, jsonToExcel } from "../utilities/excel-parser.js"
 import { FacultyModel } from "../models/FacultyModel.js"
 import { UsersModel } from "../models/UsersModel.js"
 import { CalendarModel } from "../models/CalendarModel.js"
 import { SemesterMetadataModel } from "../models/SemesterMetadataModel.js"
+import { redis } from "../index.js"
+import { BranchModel } from "../models/BranchModel.js"
 
+///////////////////////  CACHE ///////////////////////
+
+//Batch cache
+function setCache(redisKey, data){
+    redis.set(redisKey, JSON.stringify(data))
+}
+
+export const getBatchCache = async (req, res) => {
+
+    try {
+
+        let data = await redis.get("SEMESTER_METADATA")
+        
+        if(data!==null) data = JSON.parse(data)
+        else{
+
+            data = await SemesterMetadataModel.find({}, { createdAt: 0, updatedAt: 0, __v: 0 })
+            setCache("SEMESTER_METADATA", data)
+
+        }
+        
+        data = data.map( doc => doc.batch )
+        data = new Set(data.sort(function(a, b){return(b-a)}))
+        res.status(200).json({ batches: [...data] }) 
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+export const getBranchCache = async (req, res) => {
+
+    try {
+
+        let data = await redis.get("BRANCH")
+
+        if(data!==null) data = JSON.parse(data)
+        else{
+
+            data = await BranchModel.find({}, { createdAt: 0, updatedAt: 0, __v: 0 })
+            setCache("BRANCH", data)
+
+        }
+
+        data = data.map( doc => doc.branch )
+        data = new Set(data.sort(function(a, b){return(b-a)}))
+        res.status(200).json({ branches: [...data] })
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
 
 ///////////////////////  ADMIN MODULE ///////////////////////
 
@@ -131,8 +181,7 @@ export const addWorkingDay = async (req, res) => {
 
     try {
 
-        let data = req.body
-        data = { ...req.body, isWorkingDay: true }
+        let data = { ...req.body, isWorkingDay: true }
         await CalendarModel.updateOne({ date: (data.date) }, data)
 
         res.status(200).send("Success")
@@ -174,6 +223,50 @@ export const manageBatchInCalendar = async (req, res) => {
 
     } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
+
+export const extendSemesterDuration = async (req, res) => {
+
+    try {
+
+        let { from, to, batch, proccedDayOrderWith } = req.body
+
+        //This allots the day order for the batch for the given dates
+        let data = await CalendarModel.find({ date: { $gte: new Date(from), $lte: new Date(to) }, isWorkingDay: true }, { createdAt: 0, updatedAt: 0, __v: 0 }).sort({ date: 'asc' })
+        if (!isDayOrder) {
+            for (let doc of data) {
+                if(!doc.batches.includes(batch)) doc.batches.push(batch)
+                if( doc.isWorkingDay && doc.order == null ) (doc.order = doc.date.getDay())
+
+                let _id = doc._id
+                delete doc._id
+                await CalendarModel.updateOne({ _id: _id }, doc)
+            }
+
+        } else {
+
+            let dayOrder = data[0].order ?? proccedDayOrderWith
+            for (let doc of data) {
+
+                if(!doc.batches.includes(batch)) doc.batches.push(batch)
+
+                let currentDayOrder = dayOrder
+                if ((dayOrder % workingDaysPerWeek) == 0) {
+                    currentDayOrder = workingDaysPerWeek
+                    dayOrder = 1
+                } else dayOrder++
+                doc.order = doc.order ?? currentDayOrder
+
+                let _id = doc._id
+                delete doc._id
+                await CalendarModel.updateOne({ _id: _id }, doc)
+            }
+
+        }
+
+
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
 // Generates calendar for given dates
 function generateCalendar(startDate, endDate, isSaturdayHoliday = true) {
 
@@ -199,13 +292,15 @@ function generateCalendar(startDate, endDate, isSaturdayHoliday = true) {
 
 }
 
+
+//Semester Metadata
 export const createMetadata = async (req, res) => {
 
     try {
 
         let metaData = req.body
-        let batch = metaData.batch, from = metaData.semester.begin, to = metaData.semester.end, isDayOrder = metaData.schedule.isDayOrder, workingDaysPerWeek = metaData.schedule.workingDaysPerWeek9s
-        
+        let batch = metaData.batch, semester = metaData.sem, from = metaData.begin, to = metaData.end, isDayOrder = metaData.schedule.isDayOrder, workingDaysPerWeek = metaData.schedule.workingDaysPerWeek
+
         //This allots the day order for the batch for the given dates
         let data = await CalendarModel.find({ date: { $gte: new Date(from), $lte: new Date(to) }, isWorkingDay: true }, { createdAt: 0, updatedAt: 0, __v: 0 }).sort({ date: 'asc' })
         if (!isDayOrder) {
@@ -239,10 +334,21 @@ export const createMetadata = async (req, res) => {
             }
 
         }
-        //Creates a doc in semester metadata
-        await SemesterMetadataModel.create(metaData)
 
-        res.status(200).send("Semester metadata created successfully!")
+        let forCache = await SemesterMetadataModel.find({}, { createdAt: 0, updatedAt: 0, __v: 0 })
+
+        //Checks whether the batch and sem already exists
+        let check = forCache.filter( (doc) => doc.batch == batch && doc.sem == semester )
+
+        //Creates a doc in semester metadata
+        if (check.length==0){ 
+            await SemesterMetadataModel.create(metaData)
+            forCache.push(metaData)
+            setCache("SEMESTER_METADATA", forCache)
+            res.status(200).send("Semester metadata created successfully!")
+        }
+
+        else res.status(200).send("Semester for this batch already exists !!!")
 
     } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
@@ -251,17 +357,69 @@ export const updateMetadata = async (req, res) => {
 
     try {
 
+        let updates = req.body
+        console.log(updates)
 
+        let id = updates._id
+
+        delete updates._id
+
+        await SemesterMetadataModel.updateOne( {_id: id}, updates )
+
+        let forCache = await SemesterMetadataModel.find({}, { createdAt: 0, updatedAt: 0, __v: 0 })
+        setCache("SEMESTER_METADATA", forCache)
+
+        res.status(200).send("Semester metadata updated successfully!")
 
     } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
+
+export const getMetadata = async (req, res) => {
+
+    try {
+
+        let meta = await SemesterMetadataModel.find({}, { createdAt: 0, updatedAt: 0, __v: 0 }).sort({ createdAt:'desc' })
+
+        res.status(200).json(meta)
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+//Branch
+export const manageBranch = async (req, res) => {
+    try {
+
+        let data = req.body
+
+        await BranchModel.updateOne( { branch: data.branch }, data )
+
+        let branch = await BranchModel.find( {}, { createdAt: 0, updatedAt: 0, __v: 0 } )
+
+        setCache("BRANCH", branch)
+
+        res.status(200).send("Branch updates successfully!")
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+export const getBranch = async (req, res) => {
+
+    try {
+
+        let data = await BranchModel.find( {}, { createdAt: 0, updatedAt: 0, __v: 0 } )
+
+        res.status(200).json(data)
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
 
 ///////////////////////  USERS MODULE ///////////////////////
 export const getStudentUsers = async (req, res) => {
 
     try {
 
-        let { batch } = req.body
+        let { batch } = req.query
 
         // Finds students by batch and returning the result with only required fields
         let students = await StudentsModel.find({ batch }, { __v: 0, createdAt: 0, updatedAt: 0, regulation: 0, degree: 0, dob: 0 })
@@ -340,28 +498,13 @@ export const manageFacultyAccount = async (req, res) => {
 ///////////////////////  STUDENTS MODULE ///////////////////////
 
 // Filters the trash documents and updates the remainig documents
-export const updateStudents = async (req, res) => {
+export const updateStudent = async (req, res) => {
 
     try {
 
-        let load = req.body
+        studentUpdation(req.body)
 
-        let { data, trash } = filterValidStudentDocuments(load)
-
-        data.forEach(async doc => {
-
-            await StudentsModel.updateOne({ _id: doc._id }, doc)
-
-            await StudentDetailsModel.updateOne({ studentId: doc._id }, doc)
-        })
-
-        let documents = {
-            total: load.length,
-            updated: data.length,
-            trash: trash.length
-        }
-
-        res.status(200).json({ documents, trash: [...trash] })
+        res.status(200).send("Student data updated successfully!")
 
     } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
 }
@@ -371,7 +514,7 @@ export const getStudents = async (req, res) => {
 
     try {
 
-        let { batch } = req.body
+        let { batch } = req.query
 
         let ids = await StudentsModel.find({ batch }, { _id: 1 })
 
@@ -386,6 +529,31 @@ export const getStudents = async (req, res) => {
         })
 
         res.status(200).json(Students)
+
+    } catch (err) { res.status(400).send("Request Failed: " + err.message) }
+}
+
+
+// This returns the xlsx file with required students data
+export const downloadStudents = async (req, res) => {
+
+    try {
+
+        let { ids } = req.query
+
+        let Students = await StudentDetailsModel.find({ studentId: { $in: ids } }, { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 }).populate("studentId", { __v: 0, createdAt: 0, updatedAt: 0 })
+
+        Students = Students.map(doc => {
+            doc = doc.toObject()
+            let Student = doc.studentId
+            delete doc.studentId
+            doc = { ...Student, ...doc }
+            return doc
+        })
+
+        let blob = jsonToExcel(Students)
+        
+        res.status(200).send(blob)
 
     } catch (err) { res.status(400).send("Request Failed: " + err.message) }
 }
@@ -477,29 +645,14 @@ const filterValidStudentDocuments = (load) => {
 
 }
 
-
 ///////////////////////  FACULTY MODULE ///////////////////////
 export const updateFaculty = async (req, res) => {
 
     try {
 
-        let load = req.body
+        facultyUpdation(req.body)
 
-        let { data, trash } = filterValidFacultyDocuments(load)
-
-        data.forEach(async doc => {
-
-            await FacultyModel.updateOne({ _id: doc._id }, doc)
-
-        })
-
-        let documents = {
-            total: load.length,
-            updated: data.length,
-            trash: trash.length
-        }
-
-        res.status(200).json({ documents, trash: [...trash] })
+        res.status(200).send("Faculty data updated successfully")
 
     } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
 }
@@ -557,6 +710,22 @@ export const uploadFaculty = async (req, res) => {
         res.status(200).json({ documents, trash: [...trash] })
 
     } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
+}
+
+// This returns the xlsx file with required faculty data
+export const downloadFaculty = async (req, res) => {
+
+    try {
+
+        let { ids } = req.query
+
+        let Faculty = await FacultyModel.find({ _id: { $in: ids } }, { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 })
+
+        let blob = jsonToExcel(Faculty)
+        
+        res.status(200).send(blob)
+
+    } catch (err) { res.status(400).send("Request Failed: " + err.message) }
 }
 
 const facultyCreation = async (data) => {

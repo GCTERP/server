@@ -4,8 +4,6 @@ const { Schema, model } = mongoose
 
 const SemesterMetadataSchema = new Schema({
     
-    date: { type: Schema.Types.Date, required: true },
-
     sem: { type: Number, required: true },
     
     batch: { type: Number, required: true },
