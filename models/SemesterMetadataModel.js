@@ -8,6 +8,8 @@ const SemesterMetadataSchema = new Schema({
     
     batch: { type: Number, required: true },
 
+    regulation: { type: Number, required: true },
+
     ut: {
 
         count: { type: Number },

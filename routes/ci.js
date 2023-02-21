@@ -1,10 +1,12 @@
 import express from "express"
+import { getCurriculum, getElectives } from "../controllers/AdminController.js"
 
 import { demo, getAttendance, getCourses, getMasterAttendance } from "../controllers/CIController.js"
 
 const router = express.Router()
 
 ///////////////////////  ADMIN MODULE ///////////////////////
+router.get("/electives", getElectives)
 
 
 
@@ -21,6 +23,7 @@ const router = express.Router()
 
 
 /////////////////////// CURRICULUM MODULE ///////////////////////
+router.get("/curriculum", getCurriculum)
 
 
 

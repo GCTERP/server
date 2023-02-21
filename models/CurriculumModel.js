@@ -16,25 +16,25 @@ const CurriculumSchema = new Schema({
 
     marks: {
 
-        ca: { type: Number, required: true },
+        ca: { type: Number },
 
-        sem: { type: Number, required: true }
+        sem: { type: Number }
 
     },
 
     hours: {
 
-        lecture: { type: Number, required: true },
+        lecture: { type: Number },
 
-        tutorial: { type: Number, required: true },
+        tutorial: { type: Number },
 
-        practical: { type: Number, required: true },
+        practical: { type: Number },
 
-        credits: { type: Number, required: true }
+        credits: { type: Number }
 
     },
 
-    semester: { type: Number, required: true },
+    semester: { type: String, required: true },
 
     regulation: { type: Number, required: true },
 
