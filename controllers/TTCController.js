@@ -50,7 +50,15 @@ export const getStaff = async (req,res) => {
                     "courseCategory": "",
                     "facultyName": ""
                     }
-                let data1 = await EnrollmentModel.aggregate([{"$match": {semester:sem.sem, batch:sem.batch}}, {$group:{_id:"$courseCode"}} ])
+                let data1 = await EnrollmentModel.aggregate(
+                    [
+                        {
+                            "$match": {semester:sem.sem, batch:sem.batch}
+                        }, 
+                        {
+                            $group:{_id:"$courseCode"}
+                        } 
+                    ])
                 //data1 = data1.map(data => ({ ...data._doc }))
                 await CurriculumModel.populate(data1, {path:"_id", select: {courseCode:1, title:1, category:1}})
                 for(let course of data1){
@@ -229,7 +237,18 @@ export const getGroups = async (req,res) => {
         let result = {}
         result.courses = []
         for(let sem of sems){
-            let data1 = await EnrollmentModel.aggregate([{"$match": {semester:sem.sem, batch:sem.batch,branch:branch, type:"practical"}}, {$group:{_id:{"courseCode":"$courseCode","groupNo":"$groupNo", "courseId":"$courseId"}, students:{ $push: "$studentId"}}},  ])
+            let data1 = await EnrollmentModel.aggregate(
+                [
+                    {
+                        "$match": {semester:sem.sem, batch:sem.batch,branch:branch, type:"practical"}
+                    }, 
+                    {
+                        $group:{
+                            _id:{"courseCode":"$courseCode","groupNo":"$groupNo", "courseId":"$courseId"}, 
+                            students:{ $push: "$studentId"}
+                        }
+                    }  
+                ])
             console.log(data1)
             await CurriculumModel.populate(data1, {path:"_id.courseCode", select: {courseCode:1, title:1, category:1}})
             await StudentsModel.populate(data1, {path: "students", select: {register:1}});

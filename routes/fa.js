@@ -1,4 +1,5 @@
 import express from "express"
+import { getAttendance, getAttendanceReport, postAttendance } from "../controllers/FAController.js"
 
 import {  } from "../controllers/FAController.js"
 
@@ -30,7 +31,9 @@ const router = express.Router()
 
 /////////////////////// ATTENDANCE MODULE ///////////////////////
 
-
+router.get("/attendance",getAttendance)
+router.post("attendance", postAttendance)
+router.get("/attendanceReport", getAttendanceReport)
 
 /////////////////////// HALLTICKET MODULE ///////////////////////
 
