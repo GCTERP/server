@@ -6,6 +6,10 @@ const AttendanceSchema = new Schema({
     
     studentId: { type: Schema.Types.ObjectId, required: true, ref: 'Students' },
 
+    masterTimetableId: { type:Schema.Types.ObjectId, required:true, ref: 'MasterTimetable' },
+
+    courseId: { type:Schema.Types.ObjectId, required:true, ref:'CourseDetail' },
+    
     courseCode: { type: String, required: true },
 
     branch: { type: String, required: true },
