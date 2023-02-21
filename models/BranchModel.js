@@ -8,7 +8,7 @@ const BranchSchema = new Schema({
 
     branch: { type: String, required: true },
 
-    code: { type: String, required: true },
+    code: { type: Number, required: true },
 
     key: { type: String, required: true },
 

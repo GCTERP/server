@@ -1,7 +1,6 @@
 import mongoose, { set } from "mongoose"
 
 import { StudentsModel } from "../models/StudentsModel.js"
-
 import { StudentDetailsModel } from "../models/StudentDetailsModel.js"
 
 import { excelToJson, jsonToExcel } from "../utilities/excel-parser.js"
@@ -11,6 +10,8 @@ import { CalendarModel } from "../models/CalendarModel.js"
 import { SemesterMetadataModel } from "../models/SemesterMetadataModel.js"
 import { redis } from "../index.js"
 import { BranchModel } from "../models/BranchModel.js"
+import { CurriculumModel } from "../models/CurriculumModel.js"
+import { ElectiveMetadataModel } from "../models/ElectiveMetadataModel.js"
 
 ///////////////////////  CACHE ///////////////////////
 
@@ -19,7 +20,7 @@ function setCache(redisKey, data){
     redis.set(redisKey, JSON.stringify(data))
 }
 
-export const getBatchCache = async (req, res) => {
+export const getBatch = async (req, res) => {
 
     try {
 
@@ -54,9 +55,28 @@ export const getBranchCache = async (req, res) => {
 
         }
 
-        data = data.map( doc => doc.branch )
+        res.status(200).json(data)
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+export const getRegulation = async (req, res) => {
+
+    try {
+
+        let data = await redis.get("SEMESTER_METADATA")
+        
+        if(data!==null) data = JSON.parse(data)
+        else{
+
+            data = await SemesterMetadataModel.find({}, { createdAt: 0, updatedAt: 0, __v: 0 })
+            setCache("SEMESTER_METADATA", data)
+
+        }
+        
+        data = data.map( doc => doc.regulation )
         data = new Set(data.sort(function(a, b){return(b-a)}))
-        res.status(200).json({ branches: [...data] })
+        res.status(200).json({ batches: [...data] }) 
 
     } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
@@ -358,7 +378,6 @@ export const updateMetadata = async (req, res) => {
     try {
 
         let updates = req.body
-        console.log(updates)
 
         let id = updates._id
 
@@ -391,7 +410,7 @@ export const manageBranch = async (req, res) => {
 
         let data = req.body
 
-        await BranchModel.updateOne( { branch: data.branch }, data )
+        await BranchModel.updateOne( { branch: data.branch }, data, { upsert: true } )
 
         let branch = await BranchModel.find( {}, { createdAt: 0, updatedAt: 0, __v: 0 } )
 
@@ -413,6 +432,31 @@ export const getBranch = async (req, res) => {
     } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
 
+// Electives
+export const manageElectives = async (req, res) => {
+    try {
+
+        let data = req.body
+
+        await ElectiveMetadataModel.updateOne( { branch: data.branch }, data, { upsert: true } )
+
+        let electives = await ElectiveMetadataModel.find( {}, { createdAt: 0, updatedAt: 0, __v: 0 } )
+
+        res.status(200).send("Electives updates successfully!")
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+export const getElectives = async (req, res) => {
+
+    try {
+
+        let data = await ElectiveMetadataModel.find( {}, { createdAt: 0, updatedAt: 0, __v: 0 } )
+
+        res.status(200).json(data)
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
 
 ///////////////////////  USERS MODULE ///////////////////////
 export const getStudentUsers = async (req, res) => {
@@ -767,8 +811,112 @@ const filterValidFacultyDocuments = (load) => {
 
 /////////////////////// CURRICULUM MODULE ///////////////////////
 
+const curriculumUpdation = async (data) => {
+
+    const id = data._id
+
+    delete data._id
+
+    await CurriculumModel.updateOne({ _id: id }, data)
+
+}
 
 
+const curriculumCreation = async (data) => {
+
+    await CurriculumModel.create(data)
+
+}
+
+const filterValidCurriculumDocuments = (load) => {
+
+    let trash = [], data = [], required = ["courseCode", "title", "type", "category", "semester", "regulation", "branch","type", "hours", "marks"]
+
+    // Filter valid documents
+    for (let doc of load) {
+        let valid = true
+        for (let field of required)
+            if (!doc[field]) {
+                trash.push({ ...doc })
+                valid = false
+                break
+            }
+        valid && data.push({ ...doc })
+    }
+    return { data, trash }
+
+}
+
+export const uploadCurriculum = async (req, res) => {
+
+    try {
+
+        let file = req.files.curriculum
+
+        let load = await excelToJson(file), create = [], update = []
+
+        let { data, trash } = filterValidCurriculumDocuments(load)
+
+        let result = await CurriculumModel.find({ courseCode: { $in: data.map(doc => doc.courseCode) } }, { courseCode: 1 })
+
+        // Find existing documents
+        for (let doc of data) {
+            let flag = true
+            for (let rdoc of result) {
+                if (doc.courseCode == rdoc.courseCode) {
+                    update.push({ ...doc, _id: rdoc._id })
+                    flag = false
+                    break
+                }
+            } flag && create.push({ ...doc })
+        }
+
+        // Creation
+        if (create.length > 0) await curriculumCreation(create)
+
+        // Updation
+        if (update.length > 0)
+            for (let doc of update)
+                await curriculumUpdation(doc)
+
+        let documents = {
+            total: load.length,
+            created: create.length,
+            update: update.length,
+            trash: trash.length
+        }
+
+        res.status(200).json({ documents, trash: [...trash] })
+
+
+
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+export const getCurriculum = async (req, res) => {
+
+    try {
+
+        let { regulation } = req.query
+        let curriculum = await CurriculumModel.find({ regulation: regulation }, { __v: 0, createdAt: 0, updatedAt: 0 })
+
+        res.status(200).json(curriculum)
+
+    } catch (err) { res.status(400).send("Request Failed: " + err.message) }
+}
+
+export const updateCurriculum = async (req, res) => {
+
+    try {
+
+        curriculumUpdation(req.body)
+
+        res.status(200).send("Course updated successfully!")
+
+    } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
+
+}
 /////////////////////// TIMETABLE MODULE ///////////////////////
 
 

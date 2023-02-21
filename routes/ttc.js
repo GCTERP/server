@@ -1,11 +1,12 @@
 import express from "express"
+import { getCurriculum, getElectives } from "../controllers/AdminController.js";
 
 import { getdailyjob, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable } from "../controllers/TTCController.js"
 
 const router = express.Router()
 
 ///////////////////////  ADMIN MODULE ///////////////////////
-
+router.get("/electives", getElectives)
 
 
 ///////////////////////  USERS MODULE ///////////////////////
@@ -21,6 +22,7 @@ const router = express.Router()
 
 
 /////////////////////// CURRICULUM MODULE ///////////////////////
+router.get("/curriculum", getCurriculum)
 
 
 
