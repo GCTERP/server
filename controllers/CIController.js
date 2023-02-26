@@ -174,9 +174,12 @@ export const getAttendancePercent = async (req,res) =>{
     } catch(err) { res.status(400).send("Request Failed: " + err.message) }
 }
 
-export const get = async (req,res) =>{
+export const getdata = async (req,res) =>{
     try{
-
+        //  let data = await excelToJson()
+        //  console.log(data.length)
+        //  await EnrollmentModel.insertMany(data);
+        res.status(200).json(await EnrollmentModel.find({branch:"Information Technology", batch:2019}).populate("courseCode",{title:1, courseCode:1}).populate("studentId",{register:1, firstName:1, lastName:1}));
         
     } catch(err) { res.status(400).send("Request Failed: " + err.message) }
 }
