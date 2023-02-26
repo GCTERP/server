@@ -1,7 +1,7 @@
 import express from "express"
 import { getCurriculum, getElectives } from "../controllers/AdminController.js";
 
-import { getdailyjob, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable } from "../controllers/TTCController.js"
+import { getdailyjob, getDemo, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable } from "../controllers/TTCController.js"
 
 const router = express.Router()
 
@@ -28,6 +28,7 @@ router.get("/curriculum", getCurriculum)
 
 /////////////////////// TIMETABLE MODULE ///////////////////////
 
+router.get("/demo", getDemo);
 router.get("/staff", getStaff);
 router.post("/staff", postStaff);
 router.get("/timetable", getTimetable);

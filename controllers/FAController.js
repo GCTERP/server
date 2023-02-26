@@ -3,7 +3,7 @@
 import { EnrollmentModel } from "../models/EnrollmentModel.js";
 import { SemesterMetadataModel } from "../models/SemesterMetadataModel.js";
 import { MasterTimetableModel } from "../models/MasterTimetableModel.js";
-import { AttendanceModel } from "../models/AttendanceModel";
+import { AttendanceModel } from "../models/AttendanceModel.js";
 import { CourseDetailsModel } from "../models/CourseDetailsModel.js";
 import { CurriculumModel } from "../models/CurriculumModel.js";
 

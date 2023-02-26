@@ -1,7 +1,7 @@
 import express from "express"
 import { getCurriculum, getElectives } from "../controllers/AdminController.js"
 
-import { demo, getAttendance, getCourses, getMasterAttendance } from "../controllers/CIController.js"
+import { demo, getAttendance, getCourses, getdata, getMasterAttendance } from "../controllers/CIController.js"
 
 const router = express.Router()
 
@@ -36,7 +36,7 @@ router.get("/curriculum", getCurriculum)
 router.get("/attendance", getAttendance);
 router.get("/masterAttendance", getMasterAttendance);
 router.get("/courses", getCourses);
-router.get("/demo", demo);
+router.get("/demo", getdata);
 
 /////////////////////// HALLTICKET MODULE ///////////////////////
 

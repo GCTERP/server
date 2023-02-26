@@ -1,5 +1,7 @@
 ///////////////////////  ADMIN MODULE ///////////////////////
 
+import mongoose from "mongoose"
+
 import { SemesterMetadataModel } from "../models/SemesterMetadataModel.js"
 import { FacultyModel } from "../models/FacultyModel.js"
 import { CourseDetailsModel } from "../models/CourseDetailsModel.js"
@@ -8,8 +10,9 @@ import { BranchModel } from "../models/BranchModel.js"
 import { CurriculumModel } from "../models/CurriculumModel.js"
 import { EnrollmentModel } from "../models/EnrollmentModel.js"
 import { StudentsModel } from "../models/StudentsModel.js"
-import mongoose from "mongoose"
 import { CalendarModel } from "../models/CalendarModel.js"
+import { AttendanceModel } from "../models/AttendanceModel.js"
+
 ///////////////////////  USERS MODULE ///////////////////////
 
 
@@ -28,39 +31,63 @@ import { CalendarModel } from "../models/CalendarModel.js"
 
 /////////////////////// TIMETABLE MODULE ///////////////////////
 
+export const getDemo = async (req,res) =>{
+    try{
+        // await MasterTimetableModel.deleteMany({});
+        // await CourseDetailsModel.updateMany({type:"practical"}, {branch:"Information Technology"});
+        // await AttendanceModel.deleteMany({});
+        res.status(200).send(await CourseDetailsModel.find({type:"practical", branch:"Information Technology"}));
+    } catch(err) { res.status(400).send("Request Failed: "+ err.message); }
+}
+
+
+//Completed
 export const getStaff = async (req,res) => {
+
     try {
 
         let result = {}
         let { branch } = req.query
+        
+        //Get Current Batch and Semester...
         let sems = await SemesterMetadataModel.find({},{ _id:0, sem:1, batch:1 }).sort({date:-1}).limit(3)
         result.sems = sems
         result.courses = []
+
+        //Iterate for each batch...
         for(let sem of sems) {
+
+            //Check Course Details for Row creation...
             let courses = await CourseDetailsModel.find({branch:branch, semester:sem.sem,batch:sem.batch, type:"theory"}, {courseId:1, courseCode:1, semester:1, batch:1, }).populate("courseId",{_id:1, title:1, category:1}).populate("facultyId", {_id:1, title:1, firstName:1, lastName:1})
             courses = courses.map(course => ( course.toObject() ))
+            
+            //If no rows created get data from enrollment...
             if(courses.length==0){
                 let data =  {
                     "_id": "",
                     "semester": sem.sem,
                     "courseCode": "",
                     "batch": sem.batch,
+                    "branch": branch,
                     "facultyId": "",
                     "courseName": "",
                     "courseCategory": "",
                     "facultyName": ""
                     }
+                
+                //Group By Curriculum ID to get courses...
                 let data1 = await EnrollmentModel.aggregate(
                     [
                         {
-                            "$match": {semester:sem.sem, batch:sem.batch}
+                            "$match": {semester:sem.sem, batch:sem.batch, branch:branch, type: "theory"}
                         }, 
                         {
                             $group:{_id:"$courseCode"}
                         } 
                     ])
-                //data1 = data1.map(data => ({ ...data._doc }))
                 await CurriculumModel.populate(data1, {path:"_id", select: {courseCode:1, title:1, category:1}})
+                
+                //Regularize data for front-end...
                 for(let course of data1){
                     data.courseCode = course._id.courseCode
                     data.courseName = course._id.title
@@ -68,27 +95,37 @@ export const getStaff = async (req,res) => {
                     data.courseId = course._id._id
                     result.courses.push({ ...data })
                 }
+
             }else{ 
+
+                //Regularize data for front-end...
                 for (let course of courses){
                     course.courseName = course.courseId.title
                     course.courseCategory = course.courseId.category
                     course.courseId = course.courseId._id
+
+                    //check if faculty already allocated...
                     if(course.hasOwnProperty('facultyId')){
-                        course.facultyName = course.facultyId.title + ""+ course.facultyId.firstName + "" + course.facultyId.lastName
+                        course.facultyName = course.facultyId.title + " " + course.facultyId.firstName + " " + course.facultyId.lastName
                         course.facultyId = course.facultyId._id
                     } else {
                         course.facultyName = ""
                         course.facultyId = ""
                     }
+
                     result.courses.push({ ...course})
                 }
             }
             
         }
-        result.faculty = await FacultyModel.find({},{title:1, firstName:1, lastName:1})
+
+        //Get Faculty List for Drop-Down
+        result.faculty = await FacultyModel.find({},{title:1, firstName:1, lastName:1, branch:1})
         result.faculty = result.faculty.map(staff => ({ ...staff._doc }))
+        
+        //Regularize data for front-end...
         for(let faculty of result.faculty){
-            faculty.Name = faculty.title + "" + faculty.firstName + "" + faculty.lastName
+            faculty.Name = faculty.title + " " + faculty.firstName + " " + faculty.lastName
             delete faculty.title
             delete faculty.firstName
             delete faculty.lastName
@@ -97,13 +134,17 @@ export const getStaff = async (req,res) => {
         res.status(200).json(result);
 
     } catch(err) { res.status(200).send("Request Failed: "+ err.message ) }
+
 }
 
-//pending
+
+//Completed
 export const postStaff = async (req,res) => {
+
     try{
-        await CourseDetailsModel.deleteMany({type:"zetgvedtzve"})
+
         let { courses } = req.body
+        let data = []
         let data1 = {
             semType: "",
             semester: 0,
@@ -132,10 +173,17 @@ export const postStaff = async (req,res) => {
                 }
             ]
         }
+
+        //Iterate over Each Course
         for(let course of courses){
+
+            //If Course Details Id present Update ....
             if (course._id != ""){
+                console.log("Updating...")
                 await CourseDetailsModel.updateOne({_id:course._id},{$set: {facultyId:course.facultyId}})
             } else {
+
+                // Create a new entry in Course Details...
                 data1._id = mongoose.Types.ObjectId()
                 data1.semType = course.semester%2==0 ? "even" : "odd"
                 data1.semester = course.semester
@@ -144,68 +192,137 @@ export const postStaff = async (req,res) => {
                 data1.type = "theory"
                 data1.branch = course.branch
                 data1.batch = course.batch
+                
                 if(course.hasOwnProperty('facultyId')){
-                    data1.facultyId = course.facultyId
+                    if(course.facultyId!="")
+                        data1.facultyId = course.facultyId
                 }
-                await CourseDetailsModel.insert(data1)
-                console.log("updated")
+                
+                data.push({...data1})
+
+                //update Coursedetails Id in Enrollment...
                 await EnrollmentModel.updateMany({branch:course.branch,batch:course.batch,semester:course.semester,courseCode:course.courseId}, {courseId:data1._id})
             }
+
         }
+
+        console.log(data)
+
+        //Create rows in Course Detail
+        if(data.length!=0)
+            await CourseDetailsModel.insertMany(data)
+                
         res.status(200).send("Updated successfully")
+
     } catch(err) { res.status(400).send("Request Failed: "+err.message)}
 }
 
-// Doubt iruku
+
+// Completed
 export const getTimetable = async (req,res) => {
+
     try{
-        let { branch } = req.query
-        let sems = await SemesterMetadataModel.find({},{ _id:0, sem:1, batch:1 }).sort({date:-1}).limit(3)
+
         let result = {}
-        result.courses = await CourseDetailsModel.find({branch:branch, $or:[{semester:sems[0].sem,batch:sems[0].batch},{semester:sems[1].sem,batch:sems[1].batch},{semester:sems[2].sem,batch:sems[2].batch}]}, {facultyId:1, batch:1, newSchedule:1, semester:1, schedule:1, courseCode:1}).populate("courseId", {_id:0,title:1}).populate("facultyId",{title:1, firstName:1, lastName:1})
+        let flag1 = 0
+        let flag2 = 0
+        let { branch } = req.query
+        
+        //Get Current Batch and Semester
+        let sems = await SemesterMetadataModel.find({},{ _id:0, sem:1, batch:1 }).sort({date:-1}).limit(3)
         result.sems = sems
-        result.courses = result.courses.map(course => ( course.toObject() ))
-        console.log(result.courses)
-        for(let course of result.courses){
+        
+        //Get all Courses Registered from CourseDetails
+        let data = await CourseDetailsModel.find({branch:branch, $or:[{semester:sems[0].sem,batch:sems[0].batch},{semester:sems[1].sem,batch:sems[1].batch},{semester:sems[2].sem,batch:sems[2].batch}]}, {facultyId:1, batch:1, newSchedule:1, semester:1, schedule:1, courseCode:1}).populate("courseId", {_id:1,title:1}).populate("facultyId",{title:1, firstName:1, lastName:1})
+        data = data.map(course => ( course.toObject() ))
+        result.courses = []
+        
+        //Regularize data for front-end...
+        for(let course of data){
+            
+            console.log("course = ", course)
             course.courseName = course.courseId.title
-            delete course.courseId
+            course.courseId = course.courseId._id
+
+            if(course.courseName == "Internet of Things Laboratory"){
+                if(flag1==0)
+                    flag1=1
+                else
+                    continue
+            }
+
+            if(course.courseName == "Project Work"){
+                if(flag2==0)
+                    flag2=1
+                else
+                    continue
+            }
+
             if(course.newSchedule.hasOwnProperty("effectiveDate")){
                 course.effectiveDate = course.newSchedule.effectiveDate
                 course.schedule = course.newSchedule.schedule
             }
             delete course.newSchedule
             if(course.hasOwnProperty("facultyId")){
-                course.facultyName = course.facultyId.title + "" +course.facultyId.firstName + "" + course.facultyId.lastName;
+                course.facultyName = course.facultyId.title + " " +course.facultyId.firstName + " " + course.facultyId.lastName;
                 course.facultyId = course.facultyId._id
             }
+
+            result.courses.push({...course})
         }
+
         res.status(200).send(result)
+
     } catch(err) { res.status(400).send("Request Failed: " + err.message) }
+
 }
 
-//cron job pending
+
+//Completed...
 export const postTimetable = async (req,res) => {
     try{
         
-        let { data, ed, branch, batch } = req.body
+        let { data, ed, branch } = req.body
         ed = new Date(ed)
+        
+        //Iterate over each Course
         for(let course of data){
+
             let temp = {
                 effectiveDate: ed,
                 schedule: course.schedule
             }
-            await CourseDetailsModel.updateOne({_id:course.courseId}, {$set: {newSchedule: temp}})
+
+            if(course.courseName == "Internet of Things Laboratory" || course.courseName == "Project Work"){
+                await CourseDetailsModel.updateMany({courseId:course.courseId, batch:course.batch, semester:course.semester, branch: branch}, {$set: {newSchedule: temp}} )
+            }
+
+            await CourseDetailsModel.updateOne({_id:course._id}, {$set: {newSchedule: temp}})
+        
         }
+        
         res.status(200).send("Updated Successfully")
+    
     } catch(err) { res.status(400).send("Request Failed: " + err.message) }
+
 }
 
+
+//Completed
 export const getUt = async (req, res) => {
+
     try{
-        let { branch, batch, semester } = req.query
+
+        let { branch } = req.query
+        
+        //Get Current Batch and Semester...
         let sems = await SemesterMetadataModel.find({},{ _id:0, sem:1, batch:1 }).sort({date:-1}).limit(3)
+        
+        //Get All Courses of Current Batch and Semester...
         let result = await CourseDetailsModel.find({branch:branch,$or:[{semester:sems[0].sem,batch:sems[0].batch},{semester:sems[1].sem,batch:sems[1].batch},{semester:sems[2].sem,batch:sems[2].batch}]}, {_id:1, courseCode:1, unitSchedule:1 }).populate("courseId", {title:1})
         result = result.map(ut => ({ ...ut._doc }))
+        
+        //Regularize Data for front-end...
         let course_list = []
         for(let course of result){
             course.courseName = course.courseId.title
@@ -221,37 +338,56 @@ export const getUt = async (req, res) => {
                 course_list.push(temp)
             }
         }
+
         let data = {
             sems: sems,
             courses: course_list
         }
+        
         res.status(200).json(data)
+
     } catch (err) { res.status(400).send("Request Failed: " + err.message) }
+
 }
 
+
+//Need to sort students ....
 export const getGroups = async (req,res) => {
+
     try{
-        // await CourseDetailsModel.deleteMany({type:"practical"})
+        
         let { branch } = req.query
-        let sems = await SemesterMetadataModel.find({},{ _id:0, sem:1, batch:1 }).sort({date:-1}).limit(3)
         let result = {}
         result.courses = []
+        
+        //Get Current Batch and Semester
+        let sems = await SemesterMetadataModel.find({},{ _id:0, sem:1, batch:1 }).sort({date:-1}).limit(3)
+        
+        //Iterate over each Batch
         for(let sem of sems){
+
+            //Group By CourseCode and groupNo to get each groups...
             let data1 = await EnrollmentModel.aggregate(
                 [
                     {
-                        "$match": {semester:sem.sem, batch:sem.batch,branch:branch, type:"practical"}
+                        "$match": {semester:sem.sem, batch:sem.batch, branch:branch, type:"practical"}
                     }, 
                     {
                         $group:{
                             _id:{"courseCode":"$courseCode","groupNo":"$groupNo", "courseId":"$courseId"}, 
                             students:{ $push: "$studentId"}
                         }
-                    }  
-                ])
-            console.log(data1)
+                    }
+                ]
+            )
+            
             await CurriculumModel.populate(data1, {path:"_id.courseCode", select: {courseCode:1, title:1, category:1}})
             await StudentsModel.populate(data1, {path: "students", select: {register:1}});
+            
+            for(let course of data1)
+                console.log(course.students);
+
+            //Regularize data for front-end...
             for(let course of data1){
                 let data =  {
                     "semester": sem.sem,
@@ -263,55 +399,81 @@ export const getGroups = async (req,res) => {
                     "studentId":[],
                     "student":[]
                     }
+
+                //if Course detail row created get faculty details...
                 if(course._id.hasOwnProperty("courseId")){
                     await CourseDetailsModel.populate(course, {path: "_id.courseId", select:{facultyId:1}})
                     data._id = course._id.courseId._id
                     let temp = {...course._id.courseId}
                     temp = temp._doc
                     if(temp.hasOwnProperty("facultyId")){
-                        console.log("faculty = ")
                         await FacultyModel.populate(temp, {path: "facultyId", select:{title:1, firstName:1, lastName:1}})
                         data.facultyId = temp.facultyId._id
-                        data.facultyName = temp.facultyId.title+temp.facultyId.firstName+temp.facultyId.lastName
+                        data.facultyName = temp.facultyId.title+" "+temp.facultyId.firstName+" "+temp.facultyId.lastName
                     }
                 }
+
                 data.courseId = course._id.courseCode._id
                 data.courseCode = course._id.courseCode.courseCode
                 data.courseName = course._id.courseCode.title
                 data.groupNo = course._id.groupNo
+                
+                //Student List...
                 for(let student of course.students){
                     data.student.push(student.register)
                     data.studentId.push(student._id)
                 }
-                console.log({...data})
+
                 result.courses.push({...data})
             }
         }
+
+        //Faculty List for Drop Down...
         result.faculty = await FacultyModel.find({},{title:1, firstName:1, lastName:1})
         result.faculty = result.faculty.map(staff => ({ ...staff._doc }))
+        
+        //Regularize data for front-end...
         for(let faculty of result.faculty){
-            faculty.Name = faculty.title + "" + faculty.firstName + "" + faculty.lastName
+            faculty.Name = faculty.title + " " + faculty.firstName + " " + faculty.lastName
             delete faculty.title
             delete faculty.firstName
             delete faculty.lastName
         }
+
         res.status(200).send(result);
+
     } catch (err) { res.status(400).send("Request Failed: "+err.message) }
+
 }
 
 
+//Completed
 export const postGroups = async (req,res) => {
+
     try{
 
         let { courses, branch } = req.body
         let data = []
+       
+        //Iterate over courses
         for (let course of courses){
-            console.log("entry=",course)
+            
+            //If Course exist in Course Detail...
             if (course.hasOwnProperty("_id")){
+
+                //Update faculty
                 if(course.hasOwnProperty("facultyId")){
                     await CourseDetailsModel.updateOne({_id:course._id},{$set:{facultyId:course.facultyId}})
                 }
+
+                //Update CourseDetail id and Group No in Enrollment
+                for(let student of course.studentId){
+                    await EnrollmentModel.updateOne( { courseCode:course.courseId, studentId:student, type: "practical" }, {$set:{courseId:course.coursId, groupNo:course.groupNo}})
+                }
+
             }else{
+
+                //Create new entry in Course Details...
                 let data1 = {
                     _id: mongoose.Types.ObjectId(),
                     semType: course.semester%2==0?"even":"odd",
@@ -341,54 +503,89 @@ export const postGroups = async (req,res) => {
                         }
                     ]
                 }
+
+                //Update CourseDetail id and Group No in Enrollment
                 for(let student of course.studentId){
-                    await EnrollmentModel.updateOne({studentId:student,courseCode:course.courseId,type:"practical"},{$set:{courseId:data1._id}} )
+                    await EnrollmentModel.updateOne({studentId:student, courseCode:course.courseId, type:"practical"},{$set:{courseId:data1._id, groupNo:data1.groupNo}} )
                 }
+
                 data.push({...data1})
-                // for(let student of course.studentId){
-                //     await EnrollmentModel.updateOne({studentId:student,courseCode:course.courseId,type:"practical"},{$unset:{courseId:""}} )
-                // }
+               
             }
         }
+
+        //Create new Rows in Course Details...
         if(data.length!=0)
             await CourseDetailsModel.insertMany(data)
-        res.status(200).json(await EnrollmentModel.find({type:"practical"}))
+        
+        res.status(200).send("Update Success")
 
     } catch (err) { res.status(400).send("Request Failed: " + err.message) }
+
 }
 
+
+//
 export const getdailyjob = async (req,res) => {
+
     try{
-        let date = new Date(new Date().toJSON().slice(0, 10))
-        console.log(date)
-        let cal = await CalendarModel.find({date:date})
+
+        //await MasterTimetableModel.deleteMany({})
         let periods = []
-        let fn = false
-        let an = false
-        if (cal[0].isWorkingDay==true){
+        let date1 = new Date(new Date('2023-02-08').toJSON().slice(0, 10))
+            
+        //Create Days for Feb...
+        for(let i=0;i<1;i++){
+            let date = new Date(new Date().toJSON().slice(0, 10))
+            date.setDate(date1.getDate()+i)
+            let cal = await CalendarModel.find({date:date})
+            let fn = false
+            let an = false
+
+            if (cal[0].isWorkingDay==false)
+                continue
+
             for(let batch of cal[0].batches){
+
+                //Creating only for 2019 Batch...
                 if(batch!=2019)
                     continue
-                console.log("batch = ", batch)
-                let branches = await BranchModel.find({})
-                let sem = await SemesterMetadataModel.find({batch:batch},{ _id:0, sem:1, freeze:1}).sort({date:-1}).limit(1) 
-                console.log(sem[0].sem)
-                console.log(branches)
-                for(let branch of branches){
-                    console.log("branch = ",branch.branch)
-                    let courses = await CourseDetailsModel.find({branch:branch.branch, semester:sem[0].sem, batch:batch},{schedule:1,unitSchedule:1,facultyId:1, newSchedule:1})
-                    courses = courses.map(course => ({ ...course._doc }))
-                    for(let course of courses){
-                        if (course.newSchedule.hasOwnProperty("effectiveDate")){
 
-                            if(course.newSchedule.effectiveDate.toString()==date.toString()){
-                                course.schedule = course.newSchedule.schedule
-                                await CourseDetailsModel.updateOne({_id:course._id}, {schedule:course.schedule,newSchedule:null})
+                //Get all Branches...
+                let branches = await BranchModel.find({})
+                
+                //Get Current Sem of each branch...
+                let sem = await SemesterMetadataModel.find({batch:batch},{ _id:0, sem:1, freeze:1}).sort({date:-1}).limit(1) 
+
+                //Iterate over each Branch...
+                for(let branch of branches){
+
+                    //Get All Courses of the particular class...
+                    let courses = await CourseDetailsModel.find({branch:branch.name, semester:sem[0].sem, batch:batch},{schedule:1,unitSchedule:1,facultyId:1, newSchedule:1})
+                    courses = courses.map(course => ({ ...course._doc }))
+                    
+                    //Iterate over each Course...
+                    for(let course of courses){
+
+                        //Check Effective Date reached
+                        if(course.newSchedule != null){
+                            if (course.newSchedule.hasOwnProperty("effectiveDate")){
+
+                                if(course.newSchedule.effectiveDate.toString()==date.toString()){
+                                    course.schedule = course.newSchedule.schedule
+                                    await CourseDetailsModel.updateOne({_id:course._id}, {schedule:course.schedule,newSchedule:null})
+                                }
                             }
                         }
+
+                        //Set freeze date...
+                        let freezeDate = new Date(date)
+                        freezeDate.setDate(freezeDate.getDate()+sem[0].freeze.attendance)
+                        
+                        //Initialize Period...
                         let period = {
                             date: date,
-                            branch: branch.branch,
+                            branch: branch.name,
                             batch: batch,
                             dayOrder: cal[0].order,
                             workingDay: true,
@@ -396,52 +593,92 @@ export const getdailyjob = async (req,res) => {
                             facultyId:course.facultyId,
                             period:0,
                             type:"regular",
-                            freeze: new Date(new Date(new Date().setDate(date.getDate()+sem[0].freeze.attendance)).toJSON().slice(0, 10))
+                            freeze: freezeDate
                         }
+
+                        //Create Periods for each Course if it has period today...
                         for(let schedule of course.schedule){
+
+                            //Check of Is it has any period today?
                             if(Math.floor(schedule/10)==cal[0].order){
+
+                                //Check of UT Scheduled in Morning 
                                 if((schedule%10)<=4&&fn==false){
                                     period.period = schedule%10
                                     periods.push({...period})
                                 }
+
+                                //Check of UT Scheduled in Afternoon
                                 if((schedule%10)>4&&an==false){
                                     period.period = schedule%10
                                     periods.push({...period})
                                 }
                             }
                         }
+
+                        //Iterate over utSchedules to createa attendance for the UT if any Scheduled today
                         for(let ut of course.unitSchedule){
-                            console.log("date = ",ut.date, " ", typeof ut.date)
-                            console.log("cal date = ", cal[0].date, " ", typeof cal[0].date)
-                            if(ut.date.toString()==cal[0].date.toString()){
+
+                            if(ut.date==null)
+                                continue
+                            
+                            if(ut.date.toString() !=cal[0].date.toString()){
                                 console.log("Date Matched")
-                                if(ut.session=="FN"){
-                                    fn=true
-                                    periods = periods.filter(period => ![1,2,3,4].some(each => period.period == each))
-                                    period.period = 2
-                                    periods.push({...period})
-                                    period.period = 3
-                                    periods.push({...period})
-                                }
-                                if(ut.session=="AN"){
-                                    an=true
-                                    periods = periods.filter(period => ![5,6,7,8].some(each => period.period == each))
-                                    period.period = 6
-                                    periods.push({...period})
-                                    period.period = 7
-                                    periods.push({...period})
-                                }
-                                
+                                continue
                             }
+
+                            if(ut.session=="FN"){
+
+                                //Set Flag to show UT Scheduled...
+                                fn=true
+
+                                //Remove Periods if UT Scheduled...
+                                periods = periods.filter(period => ![1,2,3,4].some(each => period.period == each))
+                                
+                                //Push UT Period...
+                                period.period = 2
+                                periods.push({...period})
+                                period.period = 3
+                                periods.push({...period})
+
+                            }
+
+                            if(ut.session=="AN"){
+
+                                //Set Flag to show UT Scheduled...
+                                an=true
+
+                                //Remove Periods if UT Scheduled...
+                                periods = periods.filter(period => ![5,6,7,8].some(each => period.period == each))
+                                
+                                //Push UT Period...
+                                period.period = 6
+                                periods.push({...period})
+                                period.period = 7
+                                periods.push({...period})
+                            }
+                          
+                        //UT Iteration Close
                         }
                         //console.log("1 completed")
+                    
+                    // Course Iteration Close
                     }
+
+                //Branch Iteration Close
                 }
-                console.log(periods)
+
+            //Batch Iteration Close
             }
+
+        //Days Iteration Close
         }
-        res.status(200).json(periods)
+        
+        await MasterTimetableModel.insertMany(periods)
+        res.status(200).json(await MasterTimetableModel.find({}))
+
     } catch (err) { res.status(400).send("Request Failed: " + err.message) }
+
 }
 
 
