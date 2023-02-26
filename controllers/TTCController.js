@@ -31,14 +31,14 @@ import { AttendanceModel } from "../models/AttendanceModel.js"
 
 /////////////////////// TIMETABLE MODULE ///////////////////////
 
-export const getDemo = async (req,res) =>{
-    try{
-        // await MasterTimetableModel.deleteMany({});
-        // await CourseDetailsModel.updateMany({type:"practical"}, {branch:"Information Technology"});
-        // await AttendanceModel.deleteMany({});
-        res.status(200).send(await CourseDetailsModel.find({type:"practical", branch:"Information Technology"}));
-    } catch(err) { res.status(400).send("Request Failed: "+ err.message); }
-}
+// export const getDemo = async (req,res) =>{
+//     try{
+//         await MasterTimetableModel.deleteMany({});
+//         await CourseDetailsModel.updateMany({type:"practical"}, {branch:"Information Technology"});
+//         await AttendanceModel.deleteMany({});
+//         res.status(200).send(await CourseDetailsModel.find({type:"practical", branch:"Information Technology"}));
+//     } catch(err) { res.status(400).send("Request Failed: "+ err.message); }
+// }
 
 
 //Completed
