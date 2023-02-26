@@ -30,19 +30,17 @@ import { StudentsModel } from "../models/StudentsModel.js";
 
 /////////////////////// ATTENDANCE MODULE ///////////////////////
 
-export const demo = async (req,res) => {
-    try{
 
-        // let temp = {
-        //     begin: new Date('2023-02-01T00:00:00'),
-        //     end: new Date('2023-06-01T00:00:00')
-        // }
-
-        // await SemesterMetadataModel.updateMany({}, {semester:temp})
-
-        res.status(200).json(await AttendanceModel.find({}));
-    } catch(err) { res.status(400).send("Request Failed: " + err.message); }
-}
+// export const demo = async (req,res) => {
+//     try{
+//         let temp = {
+//             begin: new Date('2023-02-01T00:00:00'),
+//             end: new Date('2023-06-01T00:00:00')
+//         }
+//         await SemesterMetadataModel.updateMany({}, {semester:temp})
+//         res.status(200).json(await AttendanceModel.find({}));
+//     } catch(err) { res.status(400).send("Request Failed: " + err.message); }
+// }
 
 
 //Completed...
@@ -140,6 +138,7 @@ export const getAttendance = async (req,res) => {
 
 }
 
+
 //Completed
 export const postAttendance = async (req,res) => {
     
@@ -184,11 +183,15 @@ export const postAttendance = async (req,res) => {
             await AttendanceModel.insertMany(attendance)
         }
         
+        //Change boolean to attendance marked...
+        await MasterTimetableModel.updateOne({_id:data[0].masterTimetableId}, {marked:true})
+
         res.status(200).send("Updated Successfully")
 
     } catch(err) { res.status(400).send("Request Failed: " + err.message); }
 
 }
+
 
 //Completed
 export const getCourses = async (req,res) => {
@@ -238,6 +241,7 @@ export const getCourses = async (req,res) => {
     } catch(err) {res.status(400).send("Request Failed: " + err.message); }
 
 }
+
 
 //Completed...
 export const getAttendancePercent = async (req,res) =>{
@@ -297,6 +301,7 @@ export const getAttendancePercent = async (req,res) =>{
 
 }
 
+
 //Completed...
 export const getStaffTimetable = async (req,res) => {
 
@@ -321,6 +326,7 @@ export const getStaffTimetable = async (req,res) => {
     } catch(err) { res.status(400).send("Request Failed: " + err.message) }
 
 }
+
 
 //Completed...
 export const getStudentTimetable = async (req,res) => {
@@ -352,15 +358,6 @@ export const getStudentTimetable = async (req,res) => {
 
 }
 
-
-
-export const getdata = async (req,res) =>{
-    try{
-        
-        res.status(200).json(await EnrollmentModel.find({branch:"Information Technology", batch:2019}).populate("courseCode",{title:1, courseCode:1}).populate("studentId",{register:1, firstName:1, lastName:1}));
-        
-    } catch(err) { res.status(400).send("Request Failed: " + err.message) }
-}
 
 /////////////////////// HALLTICKET MODULE ///////////////////////
 
