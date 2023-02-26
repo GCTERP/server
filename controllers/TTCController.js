@@ -258,11 +258,14 @@ export const getTimetable = async (req,res) => {
                     continue
             }
 
-            if(course.newSchedule.hasOwnProperty("effectiveDate")){
-                course.effectiveDate = course.newSchedule.effectiveDate
-                course.schedule = course.newSchedule.schedule
+            if(course.newSchedule!=null){
+                if(course.newSchedule.hasOwnProperty("effectiveDate")){
+                    course.effectiveDate = course.newSchedule.effectiveDate
+                    course.schedule = course.newSchedule.schedule
+                }    
             }
             delete course.newSchedule
+            
             if(course.hasOwnProperty("facultyId")){
                 course.facultyName = course.facultyId.title + " " +course.facultyId.firstName + " " + course.facultyId.lastName;
                 course.facultyId = course.facultyId._id
