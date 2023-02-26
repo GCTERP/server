@@ -1,7 +1,7 @@
 import express from "express"
 import { getCurriculum, getElectives } from "../controllers/AdminController.js"
 
-import {  } from "../controllers/PCController.js"
+import { enrollment_PC_ApproveStudents, enrollment_PC_GetEnrolledStudentsList } from "../controllers/PCController.js"
 
 const router = express.Router()
 
@@ -39,6 +39,9 @@ router.get("/curriculum", getCurriculum)
 
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
+router.route('/enrolment').get(enrollment_PC_GetEnrolledStudentsList)
+
+router.route('/enrolment/approvestudents').post(enrollment_PC_ApproveStudents)
 
 
 

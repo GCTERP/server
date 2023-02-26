@@ -1,7 +1,7 @@
 import express from "express"
 import { getCurriculum, getElectives } from "../controllers/AdminController.js"
 
-import {  } from "../controllers/StudentController.js"
+import { enrollment_Student_CheckforEnrollment, enrollment_Student_GetEnrollmentData, enrollment_Student_SaveEnrolmentData } from "../controllers/StudentController.js"
 
 const router = express.Router()
 
@@ -39,6 +39,11 @@ router.get("/curriculum", getCurriculum)
 
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
+router.route("/enrolment").get(enrollment_Student_CheckforEnrollment)
+
+router.route("/enrolment/getdata").get(enrollment_Student_GetEnrollmentData)
+
+router.route("/enrolment/savedata").post(enrollment_Student_SaveEnrolmentData)
 
 
 

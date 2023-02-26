@@ -2,7 +2,7 @@ import express from "express"
 
 import { getCurriculum, getElectives } from "../controllers/AdminController.js"
 
-import { getAttendance, getAttendanceReport, postAttendance } from "../controllers/FAController.js"
+import { enrollment_FA_ApproveStudents, enrollment_FA_GetEnrolledStudentsList, getAttendance, getAttendanceReport, postAttendance } from "../controllers/FAController.js"
 
 const router = express.Router()
 
@@ -43,6 +43,9 @@ router.get("/attendanceReport", getAttendanceReport)
 
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
+router.route('/enrolment').get(enrollment_FA_GetEnrolledStudentsList)
+
+router.route('/enrolment/approvestudents').post(enrollment_FA_ApproveStudents)
 
 
 

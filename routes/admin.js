@@ -1,6 +1,6 @@
 import express from "express"
 
-import { addWorkingDay, createCalendar, createMetadata, declareHoliday, downloadStudents, extendSemesterDuration, getAllDates, getBatch, getBranch, getBranchCache, getCurriculum, getElectives, getFaculty, getFacultyUser, getMetadata, getRegulation, getStudents, getStudentUsers, manageBatchInCalendar, manageBranch, manageElectives, manageFacultyAccount, manageSaturday, manageStudentAccount, updateCurriculum, updateFaculty, updateMetadata, updateStudent, uploadCurriculum, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
+import { addWorkingDay, createCalendar, createMetadata, declareHoliday, downloadStudents, enrollment_Admin_GetEnrollmentStatus,enrollment_Admin_ModifyEnrollmentStatus,enrollment_Admin_GetEnrolledStudentsList,enrollment_Admin_AproveStudents,enrollment_Admin_AddStudents,enrollment_Admin_RemoveStudents, extendSemesterDuration, getAllDates, getBatch, getBranch, getBranchCache, getCurriculum, getElectives, getFaculty, getFacultyUser, getMetadata, getRegulation, getStudents, getStudentUsers, manageBatchInCalendar, manageBranch, manageElectives, manageFacultyAccount, manageSaturday, manageStudentAccount, updateCurriculum, updateFaculty, updateMetadata, updateStudent, uploadCurriculum, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
 
 const router = express.Router()
 
@@ -98,6 +98,17 @@ router.put("/curriculum/update", updateCurriculum)
 
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
+router.route("/enrolment").get(enrollment_Admin_GetEnrollmentStatus)
+
+router.route("/enrolment/modifystatus").post(enrollment_Admin_ModifyEnrollmentStatus)
+
+router.route("/enrolment/getdata").get(enrollment_Admin_GetEnrolledStudentsList)
+
+router.route("/enrolment/approve").post(enrollment_Admin_AproveStudents)
+
+router.route("/enrolment/addstudents").post(enrollment_Admin_AddStudents)
+
+router.route("/enrolment/removestudents").post(enrollment_Admin_RemoveStudents)
 
 
 
