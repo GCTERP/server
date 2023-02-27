@@ -1,9 +1,20 @@
 import express from "express"
-import { getCurriculum, getElectives } from "../controllers/AdminController.js"
+import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
 import {  } from "../controllers/HODController.js"
 
 const router = express.Router()
+
+
+///////////////////////  CACHE ///////////////////////
+
+// Batch cache
+router.get("/batch", getBatch)
+
+router.get("/branch/cache", getBranchCache)
+
+router.get("/regulation", getRegulation)
+
 
 ///////////////////////  ADMIN MODULE ///////////////////////
 router.get("/electives", getElectives)

@@ -39,7 +39,7 @@ app.use('/student', student)
 app.use('/auth', auth)
 
 export const redis = createClient()
-await redis.connect()
+// await redis.connect()
 
 mongoose.connect(process.env.MONGO_URI)
 
