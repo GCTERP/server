@@ -1,7 +1,7 @@
 import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js";
 
-import { getdailyjob, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable } from "../controllers/TTCController.js"
+import { getdailyjob, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable, getProfile, profileRequest } from "../controllers/TTCController.js"
 
 const router = express.Router()
 
@@ -88,5 +88,12 @@ router.get("/dailyjob", getdailyjob)
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+
+/////////////////////// REQUEST MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
 
 export default router

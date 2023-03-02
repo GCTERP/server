@@ -2,7 +2,7 @@ import express from "express"
 
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-import { demo, getAttendance, getAttendanceReport, postAttendance } from "../controllers/FAController.js"
+import { demo, getAttendance, getAttendanceReport, getProfile, getRequests, postAttendance, profileRequest, updateStudentProfile } from "../controllers/FAController.js"
 
 const router = express.Router()
 
@@ -83,6 +83,17 @@ router.get("/attendanceReport", getAttendanceReport)
 
 
 /////////////////////// FEEDBACK MODULE ///////////////////////
+
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+/////////////////////// REQUEST ///////////////////////
+router.get("/requests", getRequests)
+
+router.post("/requests/student/update", updateStudentProfile)
+
+router.post("/profile/request", profileRequest)
 
 
 

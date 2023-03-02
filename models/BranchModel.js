@@ -12,9 +12,13 @@ const BranchSchema = new Schema({
 
     key: { type: String, required: true },
 
-    launchDate: { type: Schema.Types.Date },
+    startDate: { type: Schema.Types.Date },
 
-    capacity: { type: Number }
+    capacity: { type: Number },
+
+    graduate: { type: String },
+
+    degree: { type: String }
 
 }, { collection: "Branch", timestamps: true })
 
