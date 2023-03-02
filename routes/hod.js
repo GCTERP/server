@@ -1,7 +1,7 @@
 import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-import {  } from "../controllers/HODController.js"
+import { getProfile, getRequests, profileRequest, updateFacultyProfile } from "../controllers/HODController.js"
 
 const router = express.Router()
 
@@ -81,5 +81,16 @@ router.get("/curriculum", getCurriculum)
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+
+/////////////////////// REQUEST MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
+
+router.get("/requests", getRequests)
+
+router.put("/requests/update", updateFacultyProfile)
 
 export default router

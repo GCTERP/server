@@ -1,13 +1,11 @@
 import express from "express"
 import { getBranchCache, getCurriculum, getElectives } from "../controllers/AdminController.js"
-
-import { demo, getMasterTimetable, getTimetable } from "../controllers/StudentController.js"
+import { demo, getMasterTimetable, getTimetable, getProfile, profileRequest } from "../controllers/StudentController.js"
 
 const router = express.Router()
 
 
 ///////////////////////  CACHE ///////////////////////
-
 router.get("/branch/cache", getBranchCache)
 
 
@@ -77,5 +75,12 @@ router.get("/masterTimetable", getMasterTimetable)
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// FEEDBACK MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
+
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
 
 export default router

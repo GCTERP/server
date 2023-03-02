@@ -10,9 +10,9 @@ const ElectiveMetadataSchema = new Schema({
 
     semester: { type: Number, required: true },
 
-    oe: { type: Number, required: true },
+    oe: { type: [String], required: true },
 
-    pe: { type: Number, required: true }
+    pe: { type: [String], required: true }
 
 }, { collection: "ElectiveMetadata", timestamps: true })
 

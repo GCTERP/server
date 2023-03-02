@@ -1,7 +1,7 @@
 import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-import {  } from "../controllers/PCController.js"
+import { getProfile, profileRequest } from "../controllers/PCController.js"
 
 const router = express.Router()
 
@@ -80,5 +80,12 @@ router.get("/curriculum", getCurriculum)
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+
+/////////////////////// REQUEST MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
 
 export default router

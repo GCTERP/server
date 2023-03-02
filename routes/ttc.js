@@ -3,6 +3,7 @@ import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } 
 
 import { dataload, getdailyjob, getDemo, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable, postUt } from "../controllers/TTCController.js"
 
+
 const router = express.Router()
 
 
@@ -90,5 +91,12 @@ router.get("/dataload", dataload);
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+
+/////////////////////// REQUEST MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
 
 export default router
