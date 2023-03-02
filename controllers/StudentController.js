@@ -50,13 +50,15 @@ export const getTimetable = async (req, res) => {
         let { studentId, semester } = req.query
 
         //Fetch all enrolled course of this semester
-        let data = await EnrollmentModel.find({ studentId: studentId, semester: semester, branch: "Information Technology" }, { courseId: 1 }).populate("courseId", { schedule: 1, newSchedule: 1, courseCode: 1, courseId: 1 })
-        await CurriculumModel.populate(data, { path: "courseId.courseId", select: { title: 1 } })
-        data = data.map(course => course.toObject())
+        
+        let data = await EnrollmentModel.find({studentId:studentId, semester:semester, branch:"Information Technology"}, {courseId:1}).populate("courseId", {schedule:1, newSchedule:1, courseCode:1, courseId:1, facultyId:1})
+        await CurriculumModel.populate(data, {path:"courseId.courseId", select:{title:1}})
+        await FacultyModel.populate(data, {path:"courseId.facultyId", select:{title:1, firstName:1, lastName:1}})
 
+        data = data.map(course => course.toObject())
+        console.log("data loaded =", data)
         //Iterate over each Course
-        for (let course of data) {
-            console.log(course)
+        for(let course of data){
 
             //Send newSchedule if any...
             if (course.courseId.newSchedule != null) {
@@ -71,6 +73,8 @@ export const getTimetable = async (req, res) => {
             delete course.courseId.newSchedule
 
             //Regularize data for front-end
+            course.facultyName = course.courseId.facultyId.title + " " + course.courseId.facultyId.firstName + " " + course.courseId.facultyId.lastName
+            delete course.courseId.facultyId
             course.courseCode = course.courseId.courseCode
             course.courseName = course.courseId.courseId.title
 

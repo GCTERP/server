@@ -312,8 +312,9 @@ export const getStaffTimetable = async (req, res) => {
         let { facultyId } = req.query
 
         //Get All Periods...
-        let data = await MasterTimetableModel.find({ facultyId: facultyId }, { date: 1, period: 1 }).populate("courseId", { courseId: 1, courseCode: 1 })
-        await CourseDetailsModel.populate(data, { path: "courseId.courseId", select: { title: 1 } })
+        
+        let data = await MasterTimetableModel.find({facultyId:facultyId}, {date:1, period:1}).sort({date:1,period:1}).populate("courseId", {courseId:1, courseCode:1})
+        await CourseDetailsModel.populate(data, {path:"courseId.courseId", select:{title:1}})
 
         //Regularize data for front-end
         data = data.map(student => (student.toObject()));
