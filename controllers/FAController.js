@@ -1,16 +1,13 @@
 ///////////////////////  ADMIN MODULE ///////////////////////
 import { EnrollmentModel } from '../models/EnrollmentModel.js'
 import { StudentsModel } from '../models/StudentsModel.js'
-import { EnrollmentModel } from "../models/EnrollmentModel.js";
-import { SemesterMetadataModel } from "../models/SemesterMetadataModel.js";
-import { MasterTimetableModel } from "../models/MasterTimetableModel.js";
-import { AttendanceModel } from "../models/AttendanceModel.js";
-import { CourseDetailsModel } from "../models/CourseDetailsModel.js";
-import { CurriculumModel } from "../models/CurriculumModel.js";
-import { StudentsModel } from "../models/StudentsModel.js";
-import { StudentDetailsModel } from "../models/StudentDetailsModel.js";
-import { RequestsModel } from "../models/RequestsModel.js";
-import { FacultyModel } from "../models/FacultyModel.js";
+import { SemesterMetadataModel } from "../models/SemesterMetadataModel.js"
+import { MasterTimetableModel } from "../models/MasterTimetableModel.js"
+import { AttendanceModel } from "../models/AttendanceModel.js"
+import { CourseDetailsModel } from "../models/CourseDetailsModel.js"
+import { CurriculumModel } from "../models/CurriculumModel.js"
+import { RequestsModel } from "../models/RequestsModel.js"
+import { FacultyModel } from "../models/FacultyModel.js"
 
 ///////////////////////  USERS MODULE ///////////////////////
 

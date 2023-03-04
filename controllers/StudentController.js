@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-import { SemesterMetadataModel } from '../models/SemesterMetadataModel.js'
-import { ElectiveMetadataModel } from '../models/ElectiveMetadataModel.js'
-import { EnrollmentModel } from '../models/EnrollmentModel.js'
-import { CurriculumModel } from '../models/CurriculumModel.js'
-import { StudentsModel } from '../models/StudentsModel.js'
-import { ValueAddedCourseModel } from '../models/ValueAddedCourseModel.js'
-import { ExternalsModel } from '../models/ExternalsModel.js'
-=======
 import { AttendanceModel } from "../models/AttendanceModel.js";
 import { CourseDetailsModel } from "../models/CourseDetailsModel.js";
 import { CurriculumModel } from "../models/CurriculumModel.js";
@@ -16,7 +7,6 @@ import { MasterTimetableModel } from "../models/MasterTimetableModel.js";
 import { RequestsModel } from "../models/RequestsModel.js";
 import { StudentDetailsModel } from "../models/StudentDetailsModel.js";
 
->>>>>>> 3c3de1a70bc670858a07338b00b0efd21a5a323d
 
 ///////////////////////  ADMIN MODULE ///////////////////////
 
