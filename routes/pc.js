@@ -1,7 +1,7 @@
 import express from "express"
 import { getCurriculum, getElectives } from "../controllers/AdminController.js"
 
-import { enrollment_PC_ApproveStudents, enrollment_PC_GetEnrolledStudentsList } from "../controllers/PCController.js"
+import { CE_PC_approvestudents, CE_PC_getenrolledstudentslist, CR_PC_approvestudents, CR_PC_getRegisteredstudentslist } from "../controllers/PCController.js"
 
 const router = express.Router()
 
@@ -39,10 +39,10 @@ router.get("/curriculum", getCurriculum)
 
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
-router.route('/enrolment').get(enrollment_PC_GetEnrolledStudentsList)
 
-router.route('/enrolment/approvestudents').post(enrollment_PC_ApproveStudents)
+router.route('/enrolment').get(CE_PC_getenrolledstudentslist)
 
+router.route('/enrolment/approvestudents').post(CE_PC_approvestudents)
 
 
 /////////////////////// RESULT MODULE ///////////////////////
@@ -50,6 +50,10 @@ router.route('/enrolment/approvestudents').post(enrollment_PC_ApproveStudents)
 
 
 /////////////////////// REGISTRATION MODULE ///////////////////////
+
+router.route('/courseregistration').get(CR_PC_getRegisteredstudentslist)
+
+router.route('/courseregistration/approvestudents').post(CR_PC_approvestudents)
 
 
 

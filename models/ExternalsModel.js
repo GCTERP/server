@@ -6,7 +6,7 @@ const ExternalsSchema = new Schema({
     
     studentId: { type: Schema.Types.ObjectId, required: true, ref: 'Students' },
 
-    courseId: { type: Schema.Types.ObjectId, required: true, ref: 'CourseDetails' },
+    courseId: { type: Schema.Types.ObjectId, required: true, ref: 'Curriculum' },
 
     letterGrade: { type: String },
 

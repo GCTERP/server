@@ -1,7 +1,7 @@
 import express from "express"
 import { getCurriculum, getElectives } from "../controllers/AdminController.js"
 
-import { enrollment_HOD_ApproveStudents, enrollment_HOD_GetEnrolledStudentsList } from "../controllers/HODController.js"
+import { CE_HOD_approvestudents, CE_HOD_getenrolledstudentslist, CR_HOD_approvestudents, CR_HOD_getRegisteredstudentslist } from "../controllers/HODController.js"
 
 const router = express.Router()
 
@@ -40,9 +40,10 @@ router.get("/curriculum", getCurriculum)
 
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
-router.route('/enrolment').get(enrollment_HOD_GetEnrolledStudentsList)
 
-router.route('/enrolment/approvestudents').post(enrollment_HOD_ApproveStudents)
+router.route('/enrolment').get(CE_HOD_getenrolledstudentslist)
+
+router.route('/enrolment/approvestudents').post(CE_HOD_approvestudents)
 
 
 
@@ -51,6 +52,10 @@ router.route('/enrolment/approvestudents').post(enrollment_HOD_ApproveStudents)
 
 
 /////////////////////// REGISTRATION MODULE ///////////////////////
+
+router.route('/courseregistration').get(CR_HOD_getRegisteredstudentslist)
+
+router.route('/courseregistration/approvestudents').post(CR_HOD_approvestudents)
 
 
 
