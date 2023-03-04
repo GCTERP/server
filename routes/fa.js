@@ -1,10 +1,25 @@
 import express from "express"
 
-import { getCurriculum, getElectives } from "../controllers/AdminController.js"
+import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
+<<<<<<< HEAD
 import { CE_FA_approvestudents, CE_FA_getenrolledstudentslist, CR_FA_approvestudents, CR_FA_getRegisteredstudentslist, getAttendance, getAttendanceReport, postAttendance } from "../controllers/FAController.js"
+=======
+import { demo, getAttendance, getAttendanceReport, getProfile, getRequests, postAttendance, profileRequest, updateStudentProfile } from "../controllers/FAController.js"
+>>>>>>> 3c3de1a70bc670858a07338b00b0efd21a5a323d
 
 const router = express.Router()
+
+
+///////////////////////  CACHE ///////////////////////
+
+// Batch cache
+router.get("/batch", getBatch)
+
+router.get("/branch/cache", getBranchCache)
+
+router.get("/regulation", getRegulation)
+
 
 ///////////////////////  ADMIN MODULE ///////////////////////
 router.get("/electives", getElectives)
@@ -34,8 +49,9 @@ router.get("/curriculum", getCurriculum)
 
 /////////////////////// ATTENDANCE MODULE ///////////////////////
 
+router.get("/demo",demo)
 router.get("/attendance",getAttendance)
-router.post("attendance", postAttendance)
+router.post("/attendance", postAttendance)
 router.get("/attendanceReport", getAttendanceReport)
 
 /////////////////////// HALLTICKET MODULE ///////////////////////
@@ -78,6 +94,17 @@ router.route('/courseregistration/approvestudents').post(CR_FA_approvestudents)
 
 
 /////////////////////// FEEDBACK MODULE ///////////////////////
+
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+/////////////////////// REQUEST ///////////////////////
+router.get("/requests", getRequests)
+
+router.post("/requests/student/update", updateStudentProfile)
+
+router.post("/profile/request", profileRequest)
 
 
 

@@ -13,6 +13,7 @@ import { redis } from "../index.js"
 import { BranchModel } from "../models/BranchModel.js"
 import { CurriculumModel } from "../models/CurriculumModel.js"
 import { ElectiveMetadataModel } from "../models/ElectiveMetadataModel.js"
+import { RequestsModel } from "../models/RequestsModel.js"
 
 ///////////////////////  CACHE ///////////////////////
 
@@ -467,7 +468,7 @@ export const getStudentUsers = async (req, res) => {
         let { batch } = req.query
 
         // Finds students by batch and returning the result with only required fields
-        let students = await StudentsModel.find({ batch }, { __v: 0, createdAt: 0, updatedAt: 0, regulation: 0, degree: 0, dob: 0 })
+        let students = await StudentsModel.find({ batch }, { __v: 0, createdAt: 0, updatedAt: 0, regulation: 0, degree: 0, dob: 0, section: 0, currentSemester: 0, mobile: 0, personalEmail: 0 })
 
         res.status(200).json(students)
 
@@ -505,7 +506,7 @@ export const getFacultyUser = async (req, res) => {
 
     try {
 
-        let faculty = await FacultyModel.find({}, { __v: 0, createdAt: 0, updatedAt: 0, admin: 0, cfa: 0, hod: 0, pc: 0, ttc: 0, fa: 0, ci: 0, primaryRole: 0, address: 0 })
+        let faculty = await FacultyModel.find({}, { __v: 0, createdAt: 0, updatedAt: 0, admin: 0, cfa: 0, hod: 0, pc: 0, ttc: 0, fa: 0, ci: 0, primaryRole: 0, address: 0, title: 0, type: 0, mobile: 0, personalEmail: 0 })
 
         res.status(200).json(faculty)
 
@@ -608,7 +609,7 @@ export const uploadStudents = async (req, res) => {
 
     try {
 
-        let file = req.files.students
+        let file = req.files.data
 
         let load = await excelToJson(file), create = [], update = []
 
@@ -691,6 +692,17 @@ const filterValidStudentDocuments = (load) => {
 }
 
 ///////////////////////  FACULTY MODULE ///////////////////////
+export const addFaculty = async (req, res) => {
+
+    try {
+
+        facultyCreation(req.body)
+
+        res.status(200).send("Faculty added successfully!")
+        
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
 export const updateFaculty = async (req, res) => {
 
     try {
@@ -717,7 +729,7 @@ export const uploadFaculty = async (req, res) => {
 
     try {
 
-        let file = req.files.faculty
+        let file = req.files.data
 
         let load = await excelToJson(file), create = [], update = []
 
@@ -765,6 +777,8 @@ export const downloadFaculty = async (req, res) => {
         let { ids } = req.query
 
         let Faculty = await FacultyModel.find({ _id: { $in: ids } }, { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 })
+
+        Faculty = Faculty.map( (doc) => doc.toObject() )
 
         let blob = jsonToExcel(Faculty)
         
@@ -852,7 +866,7 @@ export const uploadCurriculum = async (req, res) => {
 
     try {
 
-        let file = req.files.curriculum
+        let file = req.files.data
 
         let load = await excelToJson(file), create = [], update = []
 
@@ -1718,3 +1732,72 @@ export const CR_Admin_removestudents = async(req, res) => {
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////////
+export const getProfile = async (req, res) => {
+
+    try {
+
+        let { facultyId } = req.query
+
+        //Get the fa details
+        let profile = await FacultyModel.find({ _id: facultyId }, { __v: 0, createdAt: 0, updatedAt: 0 })
+
+        res.status(200).json(profile)
+
+    } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
+
+}
+
+export const updateProfile = async (req, res) => {
+
+    try {
+
+        facultyUpdation(req.body)
+
+        res.status(200).send("Profile updated successfully")
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+
+/////////////////////// REQUEST MODULE ////////////////////////////
+export const getRequests = async (req, res) => {
+
+    try {
+
+        let {facultyId} = req.query
+
+        let requests = await RequestsModel.find({to: facultyId}, {__v: 0, createdAt:0, updatedAt:0}).sort({createdAt:'desc'})
+
+        res.status(200).json(requests)
+
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+export const updateRequests = async (req, res) => {
+
+    try {
+
+        let data = req.body
+        
+        if(data.approved){
+
+            await FacultyModel.updateOne({_id: data.from}, data.body)
+ 
+        }
+        data.done=true
+
+        let id = data._id
+
+        delete data._id
+         
+        await RequestsModel.updateOne({_id:id}, data)
+
+        res.status(200).send("Request updated successfully!")
+
+
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}

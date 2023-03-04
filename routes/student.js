@@ -1,9 +1,19 @@
 import express from "express"
+<<<<<<< HEAD
 import { getCurriculum, getElectives } from "../controllers/AdminController.js"
 
 import { CE_Student_checkforenrolment, CE_Student_getenrolmentdata, CE_Student_saveenrolmentdata, CR_Student_checkforregistration, CR_Student_getregisterdata, CR_Student_saveCourseRegisteration, Result_Student_Result } from "../controllers/StudentController.js"
+=======
+import { getBranchCache, getCurriculum, getElectives } from "../controllers/AdminController.js"
+import { demo, getMasterTimetable, getTimetable, getProfile, profileRequest } from "../controllers/StudentController.js"
+>>>>>>> 3c3de1a70bc670858a07338b00b0efd21a5a323d
 
 const router = express.Router()
+
+
+///////////////////////  CACHE ///////////////////////
+router.get("/branch/cache", getBranchCache)
+
 
 ///////////////////////  ADMIN MODULE ///////////////////////
 router.get("/electives", getElectives)
@@ -31,7 +41,9 @@ router.get("/curriculum", getCurriculum)
 
 
 /////////////////////// ATTENDANCE MODULE ///////////////////////
-
+router.get("/demo", demo)
+router.get("/timetable", getTimetable)
+router.get("/masterTimetable", getMasterTimetable)
 
 
 /////////////////////// HALLTICKET MODULE ///////////////////////
@@ -83,5 +95,12 @@ router.route("/courseregistration/savedata").post(CR_Student_saveCourseRegistera
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// FEEDBACK MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
+
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
 
 export default router

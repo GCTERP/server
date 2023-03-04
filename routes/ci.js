@@ -1,9 +1,20 @@
 import express from "express"
-import { getCurriculum, getElectives } from "../controllers/AdminController.js"
+import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-import { demo, getAttendance, getCourses, getdata, getMasterAttendance } from "../controllers/CIController.js"
+import { getAttendance, getAttendancePercent, getCourses, getMasterAttendance, getStaffTimetable, getStudentTimetable, getProfile, postAttendance, profileRequest } from "../controllers/CIController.js"
 
 const router = express.Router()
+
+
+///////////////////////  CACHE ///////////////////////
+
+// Batch cache
+router.get("/batch", getBatch)
+
+router.get("/branch/cache", getBranchCache)
+
+router.get("/regulation", getRegulation)
+
 
 ///////////////////////  ADMIN MODULE ///////////////////////
 router.get("/electives", getElectives)
@@ -33,10 +44,14 @@ router.get("/curriculum", getCurriculum)
 
 /////////////////////// ATTENDANCE MODULE ///////////////////////
 
-router.get("/attendance", getAttendance);
 router.get("/masterAttendance", getMasterAttendance);
+router.get("/attendance", getAttendance);
+router.post("/attendance", postAttendance);
 router.get("/courses", getCourses);
-router.get("/demo", getdata);
+router.get("/attendancePercent", getAttendancePercent);
+router.get("/staffTimetable", getStaffTimetable);
+router.get("/studentTimetable", getStudentTimetable);   
+//router.get("/demo", demo);
 
 /////////////////////// HALLTICKET MODULE ///////////////////////
 
@@ -73,5 +88,11 @@ router.get("/demo", getdata);
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+/////////////////////// PROFILE ///////////////////////
+router.get("/profile", getProfile)
+
+
+/////////////////////// REQUEST MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
 
 export default router

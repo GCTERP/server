@@ -1,6 +1,10 @@
 import express from "express"
 
+<<<<<<< HEAD
 import { addWorkingDay, CE_Admin_addstudents, CE_Admin_approvestudents, CE_Admin_getenrolledstudentslist, CE_Admin_removestudents, createCalendar, createMetadata, CR_Admin_addstudents, CR_Admin_approvestudents, CR_Admin_getRegisteredstudentslist, CR_Admin_removestudents, declareHoliday, downloadStudents, extendSemesterDuration, getAllDates, getBatch, getBranch, getBranchCache, getCurriculum, getElectives, getFaculty, getFacultyUser, getMetadata, getRegulation, getStudents, getStudentUsers, manageBatchInCalendar, manageBranch, manageElectives, manageFacultyAccount, manageSaturday, manageStudentAccount, Result_Admin_GetResults, Result_Admin_Upload, updateCurriculum, updateFaculty, updateMetadata, updateStudent, uploadCurriculum, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
+=======
+import { addFaculty, addWorkingDay, createCalendar, createMetadata, declareHoliday, downloadFaculty, downloadStudents, extendSemesterDuration, getAllDates, getBatch, getBranch, getBranchCache, getCurriculum, getElectives, getFaculty, getFacultyUser, getMetadata, getProfile, getRegulation, getRequests, getStudents, getStudentUsers, manageBatchInCalendar, manageBranch, manageElectives, manageFacultyAccount, manageSaturday, manageStudentAccount, updateCurriculum, updateFaculty, updateMetadata, updateProfile, updateRequests, updateStudent, uploadCurriculum, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
+>>>>>>> 3c3de1a70bc670858a07338b00b0efd21a5a323d
 
 const router = express.Router()
 
@@ -52,11 +56,11 @@ router.get("/electives", getElectives)
 ///////////////////////  USERS MODULE ///////////////////////
 router.get("/users/students", getStudentUsers)
 
-router.put("/users/manage/students", manageStudentAccount)
+router.put("/users/students/manage", manageStudentAccount)
 
 router.get("/users/faculty", getFacultyUser)
 
-router.put("/users/manage/faculty", manageFacultyAccount)
+router.put("/users/faculty/manage", manageFacultyAccount)
 
 
 ///////////////////////  STUDENTS MODULE ///////////////////////
@@ -74,8 +78,11 @@ router.post("/faculty/upload", uploadFaculty)
 
 router.put("/faculty/update", updateFaculty)
 
+router.get("/faculty/download", downloadFaculty)
+
 router.get("/faculty", getFaculty)
 
+router.post("/faculty/add", addFaculty)
 
 /////////////////////// CURRICULUM MODULE ///////////////////////
 router.post("/curriculum/upload", uploadCurriculum)
@@ -83,6 +90,13 @@ router.post("/curriculum/upload", uploadCurriculum)
 router.get("/curriculum", getCurriculum)
 
 router.put("/curriculum/update", updateCurriculum)
+
+
+/////////////////////// REQUEST MODULE ////////////////////////////
+
+router.get("/requests", getRequests)
+
+router.put("/requests/update", updateRequests)
 
 
 /////////////////////// TIMETABLE MODULE ///////////////////////
@@ -147,5 +161,10 @@ router.route("/courseregistration/removestudents").post(CR_Admin_removestudents)
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+router.put("/profile/update", updateProfile)
 
 export default router

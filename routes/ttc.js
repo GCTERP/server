@@ -1,9 +1,21 @@
 import express from "express"
-import { getCurriculum, getElectives } from "../controllers/AdminController.js";
+import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js";
 
-import { getdailyjob, getDemo, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable } from "../controllers/TTCController.js"
+import { dataload, getdailyjob, getDemo, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable, postUt } from "../controllers/TTCController.js"
+
 
 const router = express.Router()
+
+
+///////////////////////  CACHE ///////////////////////
+
+// Batch cache
+router.get("/batch", getBatch)
+
+router.get("/branch/cache", getBranchCache)
+
+router.get("/regulation", getRegulation)
+
 
 ///////////////////////  ADMIN MODULE ///////////////////////
 router.get("/electives", getElectives)
@@ -34,9 +46,11 @@ router.post("/staff", postStaff);
 router.get("/timetable", getTimetable);
 router.post("/timetable", postTimetable);
 router.get("/ut", getUt);
+router.post("/ut", postUt);
 router.get("/groups", getGroups);
 router.post("/groups",postGroups);
 router.get("/dailyjob", getdailyjob)
+router.get("/dataload", dataload);
 
 /////////////////////// ATTENDANCE MODULE ///////////////////////
 
@@ -77,5 +91,12 @@ router.get("/dailyjob", getdailyjob)
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+
+/////////////////////// REQUEST MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
 
 export default router

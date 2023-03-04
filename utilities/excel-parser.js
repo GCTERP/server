@@ -2,23 +2,27 @@ import XLSX from "xlsx"
 import fs from "fs"
 
 
-export const excelToJson = async (file) => {
+export const excelToJson = async () => {
 
-    let time = Date.now().toString()
+    //let time = Date.now().toString()
 
-    await file.mv("./trash/upload_" + time + ".xlsx")
+    //await file.mv("./trash/upload_" + time + ".xlsx")
 
-    const excel = XLSX.readFile("./trash/upload_" + time + ".xlsx")
+    const excel = XLSX.readFile("C:/Users/THIYANESH S/Downloads/IT_Enrollment.xlsx")
 
     const source = excel.Sheets[excel.SheetNames[0]]
 
     const data = XLSX.utils.sheet_to_json(source)
-    
-    let result = data.map(doc => expandObject(doc))
 
-    fs.unlinkSync("./trash/upload_" + time + ".xlsx")
+    console.log(data)
 
-    return result.map(doc => rectifyObject(doc))
+    return data
+
+//    let result = data.map(doc => expandObject(doc))
+
+    //fs.unlinkSync("./trash/upload_" + time + ".xlsx")
+
+  //  return result.map(doc => rectifyObject(doc))
 }
 
 export const jsonToExcel = (data) => {

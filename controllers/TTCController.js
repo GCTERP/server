@@ -1,6 +1,8 @@
 ///////////////////////  ADMIN MODULE ///////////////////////
 
 import mongoose from "mongoose"
+import XLSX from "xlsx"
+import fs from "fs"
 
 import { SemesterMetadataModel } from "../models/SemesterMetadataModel.js"
 import { FacultyModel } from "../models/FacultyModel.js"
@@ -12,6 +14,7 @@ import { EnrollmentModel } from "../models/EnrollmentModel.js"
 import { StudentsModel } from "../models/StudentsModel.js"
 import { CalendarModel } from "../models/CalendarModel.js"
 import { AttendanceModel } from "../models/AttendanceModel.js"
+import { excelToJson } from "../utilities/excel-parser.js"
 
 ///////////////////////  USERS MODULE ///////////////////////
 
@@ -33,11 +36,28 @@ import { AttendanceModel } from "../models/AttendanceModel.js"
 
 export const getDemo = async (req,res) =>{
     try{
-        // await MasterTimetableModel.deleteMany({});
-        // await CourseDetailsModel.updateMany({type:"practical"}, {branch:"Information Technology"});
-        // await AttendanceModel.deleteMany({});
-        res.status(200).send(await CourseDetailsModel.find({type:"practical", branch:"Information Technology"}));
-    } catch(err) { res.status(400).send("Request Failed: "+ err.message); }
+        res.status(200).send(await CourseDetailsModel.find({}));
+    } catch(err) { res.status(400).send("Request Failed: " + err.message); }
+}
+
+export const dataload = async (req,res) => {
+    
+    try{
+
+        await EnrollmentModel.deleteMany({})
+        await CourseDetailsModel.deleteMany({})
+
+        const excel = XLSX.readFile("C:/Users/THIYANESH S/Downloads/IT_Enrollment.xlsx")
+
+        const source = excel.Sheets[excel.SheetNames[0]]
+    
+        const data = XLSX.utils.sheet_to_json(source)
+        
+        await EnrollmentModel.insertMany(data)
+        
+        res.status(200).json(await EnrollmentModel.find({}))
+    
+    } catch(err) { res.status(400).send("Request Failed: " + err.message) }
 }
 
 
@@ -206,8 +226,6 @@ export const postStaff = async (req,res) => {
 
         }
 
-        console.log(data)
-
         //Create rows in Course Detail
         if(data.length!=0)
             await CourseDetailsModel.insertMany(data)
@@ -244,7 +262,7 @@ export const getTimetable = async (req,res) => {
             course.courseName = course.courseId.title
             course.courseId = course.courseId._id
 
-            if(course.courseName == "Internet of Things Laboratory"){
+            if(course.courseName == "Mini Project"){
                 if(flag1==0)
                     flag1=1
                 else
@@ -258,11 +276,14 @@ export const getTimetable = async (req,res) => {
                     continue
             }
 
-            if(course.newSchedule.hasOwnProperty("effectiveDate")){
-                course.effectiveDate = course.newSchedule.effectiveDate
-                course.schedule = course.newSchedule.schedule
+            if(course.newSchedule!=null){
+                if(course.newSchedule.hasOwnProperty("effectiveDate")){
+                    course.effectiveDate = course.newSchedule.effectiveDate
+                    course.schedule = course.newSchedule.schedule
+                }    
             }
             delete course.newSchedule
+            
             if(course.hasOwnProperty("facultyId")){
                 course.facultyName = course.facultyId.title + " " +course.facultyId.firstName + " " + course.facultyId.lastName;
                 course.facultyId = course.facultyId._id
@@ -293,7 +314,7 @@ export const postTimetable = async (req,res) => {
                 schedule: course.schedule
             }
 
-            if(course.courseName == "Internet of Things Laboratory" || course.courseName == "Project Work"){
+            if(course.courseName == "Mini Project" || course.courseName == "Project Work"){
                 await CourseDetailsModel.updateMany({courseId:course.courseId, batch:course.batch, semester:course.semester, branch: branch}, {$set: {newSchedule: temp}} )
             }
 
@@ -319,7 +340,7 @@ export const getUt = async (req, res) => {
         let sems = await SemesterMetadataModel.find({},{ _id:0, sem:1, batch:1 }).sort({date:-1}).limit(3)
         
         //Get All Courses of Current Batch and Semester...
-        let result = await CourseDetailsModel.find({branch:branch,$or:[{semester:sems[0].sem,batch:sems[0].batch},{semester:sems[1].sem,batch:sems[1].batch},{semester:sems[2].sem,batch:sems[2].batch}]}, {_id:1, courseCode:1, unitSchedule:1 }).populate("courseId", {title:1})
+        let result = await CourseDetailsModel.find({branch:branch,$or:[{semester:sems[0].sem,batch:sems[0].batch},{semester:sems[1].sem,batch:sems[1].batch},{semester:sems[2].sem,batch:sems[2].batch}]}, {_id:1, courseCode:1, unitSchedule:1, batch:1 }).populate("courseId", {title:1})
         result = result.map(ut => ({ ...ut._doc }))
         
         //Regularize Data for front-end...
@@ -329,9 +350,10 @@ export const getUt = async (req, res) => {
             delete course.courseId
             for(let ut of course.unitSchedule){
                 let temp = {}
-                temp.coursId = course._id
-                temp.courseName = course.courseName
+                temp.batch = course.batch
+                temp.courseId = course._id
                 temp.courseCode = course.courseCode
+                temp.courseName = course.courseName
                 temp.date = ut.date
                 temp.number = ut.number
                 temp.session = ut.session
@@ -344,7 +366,73 @@ export const getUt = async (req, res) => {
             courses: course_list
         }
         
+        console.log("Data Sent")
         res.status(200).json(data)
+
+    } catch (err) { res.status(400).send("Request Failed: " + err.message) }
+
+}
+
+
+//
+export const postUt = async (req,res) => {
+
+    try{
+
+        let data = req.body
+        console.log(data)
+        let data1 = []
+
+        //Group Data of Same course
+        for(let course of data){
+            let flag=false
+
+            for(let course1 of data1){
+                
+                //Check if row for the course created 
+                if(course.courseId === course1.courseId){
+                    
+                    let temp = {
+                        date:course.date,
+                        number:course.number,
+                        session: course.session
+                    }
+
+                    //push only UT into it
+                    course1.unitSchedule.push({...temp})
+                    flag=true
+                    break
+                }
+            }
+
+            //Create course row if not done
+            if(flag==false){
+                
+                let temp = {
+                    courseId: course.courseId,
+                    courseName: course.courseName,
+                    courseCode: course.courseCode,
+                    unitSchedule: [
+                        {
+                            date:course.date,
+                            number:course.number,
+                            session: course.session
+                        }
+                    ]
+                }
+
+                data1.push({...temp})
+            }
+
+        }
+
+        //push data into DB
+        for(let course of data1){
+            console.log("updating...")
+            await CourseDetailsModel.updateOne({_id:course.courseId}, {unitSchedule:course.unitSchedule})
+        }
+
+        res.status(200).json(data1)
 
     } catch (err) { res.status(400).send("Request Failed: " + err.message) }
 
@@ -529,15 +617,16 @@ export const postGroups = async (req,res) => {
 export const getdailyjob = async (req,res) => {
 
     try{
-
+        console.log(await CalendarModel.find({}).sort({date:1}))
         //await MasterTimetableModel.deleteMany({})
         let periods = []
-        let date1 = new Date(new Date('2023-02-08').toJSON().slice(0, 10))
+        let date1 = new Date(new Date('2023-02-01').toJSON().slice(0, 10))
             
         //Create Days for Feb...
-        for(let i=0;i<1;i++){
-            let date = new Date(new Date().toJSON().slice(0, 10))
+        for(let i=0;i<80;i++){
+            let date = new Date(new Date('2023-02-01').toJSON().slice(0, 10))
             date.setDate(date1.getDate()+i)
+            console.log(i, date)
             let cal = await CalendarModel.find({date:date})
             let fn = false
             let an = false
@@ -721,3 +810,42 @@ export const getdailyjob = async (req,res) => {
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////////
+export const getProfile = async (req, res) => {
+
+    try {
+
+        let { facultyId } = req.query, toId = null, staff = null
+        //Get the fa details
+        let profile = await FacultyModel.find({ _id: facultyId }, { __v: 0, createdAt: 0, updatedAt: 0 })
+        profile = profile[0]
+    
+        //checking whether the fa has made any request
+        let isRequestMade = await RequestsModel.find({ from: facultyId }, { done: 1 })
+
+        //storing whether the fa can make request or not
+        let canRequest = (isRequestMade) ? true : false
+
+        staff = await FacultyModel.find({ admin: true }, { _id: 1 })
+        toId = staff[0]._id
+
+        res.status(200).json({...profile.toObject(), canRequest: canRequest, toId: toId })
+
+    } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
+
+}
+
+/////////////////////// REQUEST MODULE ///////////////////////
+export const profileRequest = async (req, res) => {
+
+    try {
+
+        let request = req.body
+
+        await RequestsModel.create(request)
+
+        res.status(200).send("Requested successfully!")
+
+    } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
+}
