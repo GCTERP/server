@@ -1,12 +1,6 @@
 import express from "express"
-<<<<<<< HEAD
-import { getCurriculum, getElectives } from "../controllers/AdminController.js"
-
-import { CE_Student_checkforenrolment, CE_Student_getenrolmentdata, CE_Student_saveenrolmentdata, CR_Student_checkforregistration, CR_Student_getregisterdata, CR_Student_saveCourseRegisteration, Result_Student_Result } from "../controllers/StudentController.js"
-=======
 import { getBranchCache, getCurriculum, getElectives } from "../controllers/AdminController.js"
-import { demo, getMasterTimetable, getTimetable, getProfile, profileRequest } from "../controllers/StudentController.js"
->>>>>>> 3c3de1a70bc670858a07338b00b0efd21a5a323d
+import { demo, getMasterTimetable, getTimetable, getProfile, profileRequest, CE_Student_checkforenrolment, CE_Student_getenrolmentdata, CE_Student_saveenrolmentdata, Result_Student_Result, CR_Student_checkforregistration, CR_Student_getregisterdata, CR_Student_saveCourseRegisteration } from "../controllers/StudentController.js"
 
 const router = express.Router()
 

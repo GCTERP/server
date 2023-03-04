@@ -1,11 +1,7 @@
 import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-<<<<<<< HEAD
-import { CE_PC_approvestudents, CE_PC_getenrolledstudentslist, CR_PC_approvestudents, CR_PC_getRegisteredstudentslist } from "../controllers/PCController.js"
-=======
-import { getProfile, profileRequest } from "../controllers/PCController.js"
->>>>>>> 3c3de1a70bc670858a07338b00b0efd21a5a323d
+import { getProfile, profileRequest, CE_PC_approvestudents, CE_PC_getenrolledstudentslist, CR_PC_approvestudents, CR_PC_getRegisteredstudentslist } from "../controllers/PCController.js"
 
 const router = express.Router()
 

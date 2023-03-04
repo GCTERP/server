@@ -2,11 +2,7 @@ import express from "express"
 
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-<<<<<<< HEAD
-import { CE_FA_approvestudents, CE_FA_getenrolledstudentslist, CR_FA_approvestudents, CR_FA_getRegisteredstudentslist, getAttendance, getAttendanceReport, postAttendance } from "../controllers/FAController.js"
-=======
-import { demo, getAttendance, getAttendanceReport, getProfile, getRequests, postAttendance, profileRequest, updateStudentProfile } from "../controllers/FAController.js"
->>>>>>> 3c3de1a70bc670858a07338b00b0efd21a5a323d
+import { demo, getAttendance, getAttendanceReport, getProfile, getRequests, postAttendance, profileRequest, updateStudentProfile, CE_FA_approvestudents, CE_FA_getenrolledstudentslist, CR_FA_approvestudents, CR_FA_getRegisteredstudentslist, getAttendance, getAttendanceReport, postAttendance } from "../controllers/FAController.js"
 
 const router = express.Router()
 
