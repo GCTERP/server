@@ -9,6 +9,10 @@ const SemesterMetadataSchema = new Schema({
     batch: { type: Number, required: true },
 
     regulation: { type: Number, required: true },
+    
+    begin: { type: Schema.Types.Date },
+    
+    end: { type: Schema.Types.Date },
 
     ut: {
 
@@ -71,14 +75,6 @@ const SemesterMetadataSchema = new Schema({
         internal: { type: Schema.Types.Date },
     
         attendance: { type: Schema.Types.Date }
-
-    },
-
-    semester: {
-
-        begin: { type: Schema.Types.Date },
-    
-        end: { type: Schema.Types.Date }
 
     },
 

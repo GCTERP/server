@@ -1,6 +1,6 @@
 import express from "express"
 
-import { addFaculty, addWorkingDay, createCalendar, createMetadata, declareHoliday, downloadFaculty, downloadStudents, extendSemesterDuration, getAllDates, getBatch, getBranch, getBranchCache, getCurriculum, getElectives, getFaculty, getFacultyUser, getMetadata, getProfile, getRegulation, getRequests, getStudents, getStudentUsers, manageBatchInCalendar, manageBranch, manageElectives, manageFacultyAccount, manageSaturday, manageStudentAccount, updateCurriculum, updateFaculty, updateMetadata, updateProfile, updateRequests, updateStudent, uploadCurriculum, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
+import { addFaculty, addWorkingDay, createCalendar, createMetadata, declareHoliday, downloadFaculty, downloadStudents, extendSemesterDuration, getAllDates, getBatch, getBranch, getBranchCache, getCurriculum, getElectives, getFaculty, getFacultyAdvisor, getFacultyUser, getFAMeta, getMetadata, getMinMaxDate, getProfile, getRegulation, getRequests, getStudents, getStudentUsers, manageBatchInCalendar, manageBranch, manageElectives, manageFacultyAccount, manageSaturday, manageStudentAccount, updateCurriculum, updateFaculty, updateMetadata, updateProfile, updateRequests, updateStudent, uploadCurriculum, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
 
 const router = express.Router()
 
@@ -31,12 +31,16 @@ router.put("/calendar/manage/batch", manageBatchInCalendar)
 
 router.put("/calendar/manage/saturday", manageSaturday)
 
+router.get("/calendar/minmaxdate", getMinMaxDate)
+
 // SemesterMetadata Module
 router.post("/semestermeta/create", createMetadata)
 
 router.get("/semestermeta", getMetadata)
 
 router.put("/semestermeta/update", updateMetadata)
+
+router.get("/semestermeta/fa", getFAMeta)
 
 // Branch Module
 router.post("/branch/manage", manageBranch)
@@ -79,6 +83,8 @@ router.get("/faculty/download", downloadFaculty)
 router.get("/faculty", getFaculty)
 
 router.post("/faculty/add", addFaculty)
+
+router.get("/faculty/fa", getFacultyAdvisor)
 
 /////////////////////// CURRICULUM MODULE ///////////////////////
 router.post("/curriculum/upload", uploadCurriculum)
