@@ -1,6 +1,6 @@
 import express from "express"
 
-import { addFaculty, addWorkingDay, createCalendar, createMetadata, declareHoliday, downloadFaculty, downloadStudents, extendSemesterDuration, getAllDates, getBatch, getBranch, getBranchCache, getCurriculum, getElectives, getFaculty, getFacultyAdvisor, getFacultyUser, getFAMeta, getMetadata, getMinMaxDate, getProfile, getRegulation, getRequests, getStudents, getStudentUsers, manageBatchInCalendar, manageBranch, manageElectives, manageFacultyAccount, manageSaturday, manageStudentAccount, updateCurriculum, updateFaculty, updateMetadata, updateProfile, updateRequests, updateStudent, uploadCurriculum, uploadFaculty, uploadStudents } from "../controllers/AdminController.js"
+import { addFaculty, addWorkingDay, downloadFaculty, getProfile, getRequests, updateProfile, updateRequests, CE_Admin_addstudents, CE_Admin_approvestudents, CE_Admin_getenrolledstudentslist, CE_Admin_removestudents, createCalendar, createMetadata, CR_Admin_addstudents, CR_Admin_approvestudents, CR_Admin_getRegisteredstudentslist, CR_Admin_removestudents, declareHoliday, downloadStudents, extendSemesterDuration, getAllDates, getBatch, getBranch, getBranchCache, getCurriculum, getElectives, getFaculty, getFacultyUser, getMetadata, getRegulation, manageBatchInCalendar, manageBranch, manageElectives, manageFacultyAccount, manageSaturday, manageStudentAccount, Result_Admin_GetResults, Result_Admin_Upload, updateCurriculum, updateFaculty, updateMetadata, updateStudent, uploadCurriculum, uploadFaculty, uploadStudents, getStudentUsers, getStudents } from "../controllers/AdminController.js"
 
 const router = express.Router()
 
@@ -115,13 +115,32 @@ router.put("/requests/update", updateRequests)
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
 
+router.route("/enrolment/getdata").get(CE_Admin_getenrolledstudentslist)
+
+router.route("/enrolment/approve").post(CE_Admin_approvestudents)
+
+router.route("/enrolment/addstudents").post(CE_Admin_addstudents)
+
+router.route("/enrolment/removestudents").post(CE_Admin_removestudents)
+
 
 
 /////////////////////// RESULT MODULE ///////////////////////
 
+router.route("/result").post(Result_Admin_GetResults)
+
+router.route("/result/upload").post(Result_Admin_Upload)
 
 
 /////////////////////// REGISTRATION MODULE ///////////////////////
+
+router.route("/courseregistration/getdata").get(CR_Admin_getRegisteredstudentslist)
+
+router.route("/courseregistration/approve").post(CR_Admin_approvestudents)
+
+router.route("/courseregistration/addstudents").post(CR_Admin_addstudents)
+
+router.route("/courseregistration/removestudents").post(CR_Admin_removestudents)
 
 
 

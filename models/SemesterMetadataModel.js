@@ -134,15 +134,7 @@ const SemesterMetadataSchema = new Schema({
     
     },
 
-    addOnEligible: [
-        {
-
-            branch: { type: String },
-        
-            course: { type: String }
-        
-        }
-    ],
+    addOnEligible: { type: Boolean, default: false },
 
     downloadHallticket: { type: Boolean, default: false }
 
