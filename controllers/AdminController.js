@@ -2,7 +2,8 @@ import mongoose, { set } from "mongoose"
 
 import { StudentsModel } from "../models/StudentsModel.js"
 import { StudentDetailsModel } from "../models/StudentDetailsModel.js"
-
+import { EnrollmentModel } from '../models/EnrollmentModel.js'
+import { ExternalsModel } from '../models/ExternalsModel.js'
 import { excelToJson, jsonToExcel } from "../utilities/excel-parser.js"
 import { FacultyModel } from "../models/FacultyModel.js"
 import { UsersModel } from "../models/UsersModel.js"
@@ -945,14 +946,771 @@ export const updateCurriculum = async (req, res) => {
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
 
+// fetch data to feed the enrollment page 
+export const CE_Admin_getenrolledstudentslist = async(req, res) => {
+    try{
+        const { batch, sem, branch } = req.body
+        
+        const data = await EnrollmentModel.find({batch:batch, branch:{$in:branch},semester:{$in:sem}}, {courseCode:1,studentId:1,branch:1,enrolled:1,approval:1,_id:0}).populate("courseCode", {courseCode:1,title:1}).populate("studentId",{firstName:1,register:1,branch:1,batch:1})     
+             
+
+        let result = []
+        for(let doc of data) {
+            let flag = result.some(rdoc =>  rdoc.courseCode == doc.courseCode.courseCode)
+            if(flag) continue
+            
+            const obj = {
+                courseCode: doc.courseCode.courseCode,
+                courseTitle: doc.courseCode.title,
+                students: data.filter(ndoc => ndoc.courseCode.courseCode == doc.courseCode.courseCode && { registerNumber: doc.studentId.register, StudentName: doc.studentId.firstName })
+            }
+            result.push(obj)
+        }
+   
+        let courses = []
+        for(let i of result){
+            let nstudents = []
+            let studentcount = 0
+            for(let student of i.students){
+                
+               
+               
+                studentcount = studentcount + 1
+                const nstudent = {
+                    registernumber : student.studentId.register,
+                    studentname : student.studentId.firstName,
+                    branch : student.studentId.branch,
+                    batch : student.studentId.batch,
+                    enrolled : student.enrolled,
+                    approval : student.approval
+                }
+                nstudents.push(nstudent)
+            }
+            const course = {
+                courseCode : i.courseCode,
+                courseTitle: i.courseTitle,
+                studentsenrolled:studentcount,
+            //    studentsEnrolled:
+                studentsList:nstudents
+                
+            }
+            courses.push(course)
+        }
+
+        res.status(200).json(courses)
+        
+        //     enrollmentdata.forEach(groupdata)
+        // //    finaldetails
+        
+        //     function groupdata(eachcourse){
+            
+            //         const course = {
+                //            courseCode : eachcourse.courseCode.courseCode,
+                //            courseTitle: eachcourse.courseCode.title,
+                //         //    studentsEnrolled:
+    //             studentsList:[{sturegnum:eachcourse.studentId.register,studentname:eachcourse.studentId.firstName}]
+    //         }
+    //         courses.push(course)
+
+    //         // return courses
+    //     }
+        // console.log(courses)
+        //     res.status(200).json({success:true,message:"Enrolled student details are fetched",totalcourse:enrollmentdata.length,courses})
+        
+    }catch(error){
+        console.log(error);
+        res.status(400).json({success:false,message:"Something wrong happened",Error:error});
+    }
+}
+
+// manage approving the students
+export const CE_Admin_approvestudents = async(req, res) => {
+    try{
+        const {courses} = req.body
+        let success = true
+        let message = "All the changes have been modified"
+        let invalidCourseCode = []
+        let invalidregisternumber = []
+
+        for(let course of courses){          
+            const courseinfo = await CurriculumModel.findOne({courseCode:course.courseCode})
+           
+            if(!courseinfo){
+                message = "Course Code was not found"
+                success = false
+                invalidCourseCode.push(course.courseCode)
+                continue
+            }
+            for(let student of course.students){
+               
+                const studentinfo = await StudentsModel.findOne({register:student.register})
+                
+                if(!studentinfo){
+                    message = "Student register number was not found"
+                    success = false
+                    
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+               
+                const enrollmentdata = await EnrollmentModel.findOne({courseCode:courseinfo._id,studentId:studentinfo._id})
+               
+                if(!enrollmentdata){
+                    message = "These Students have not enrolled for given courses"
+                    success = false
+                    invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+                if(enrollmentdata.approval == 10 && enrollmentdata.enrolled){
+                    message = "These students are already enrolled/approved"
+                    success = false
+                    invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+
+                if(student.approval == -4){
+                    enrollmentdata.enrolled = false
+                    enrollmentdata.approval = -4
+                }
+                
+                if(student.approval == 4){
+                    enrollmentdata.approval = student.approval
+                    enrollmentdata.enrolled = true
+                }else{
+                    enrollmentdata.enrolled = false
+                }
+
+                const result = await enrollmentdata.save()
+                
+                if(!result){
+                    message = "Unable to save the changes"
+                    success = false
+                    invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+            }
+        }
+       
+        if(!success){
+            res.status(200).json({success:success,message:message,invalidCourseCode,invalidregisternumber})
+        }
+        else{
+            res.status(200).json({success:success,message:message})
+        }
+  
+        
+    }catch(error){
+        console.log(error)
+        res.status(400).json({success:false,message:"Something wrong happened",Error:error});
+    }
+}
+
+// Adding students to enrollment
+export const CE_Admin_addstudents = async(req, res) => {
+    try{
+        const {courses} = req.body
+
+        let success = true
+        let message = "All the changes have been modified"
+        let invalidCourseCode = [], invalidregisternumber = []
+
+        for(let course of courses){          
+            const courseinfo = await CurriculumModel.findOne({courseCode:course.courseCode})
+            
+            if(!courseinfo){
+                message = "Course Code was not found"
+                success = false
+                invalidCourseCode.push(course.courseCode)
+                continue
+            }
+
+            for(let student of course.students){
+               
+                const studentinfo = await StudentsModel.findOne({register:student.register})
+                
+                if(!studentinfo){
+                    message = "Student register number was not found"
+                    success = false
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+               
+                const foundenrollmentdata = await EnrollmentModel.findOne({courseCode:courseinfo._id,studentId:studentinfo._id})
+               
+                if(foundenrollmentdata){
+                    message = "These Students have already enrolled for given courses"
+                    success = false
+                    // invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+                const enrollmentdata = {
+                    enrolled : true,
+                    approval : 4
+                }
+
+                enrollmentdata.type = "normal"
+                enrollmentdata.courseCode = courseinfo._id
+                enrollmentdata.studentId = studentinfo._id
+                enrollmentdata.batch = studentinfo.batch
+                enrollmentdata.regulation = studentinfo.regulation
+                if(courseinfo.category =="PE" || courseinfo.category=="OE"){
+                    // console.log(course.electiveType)
+                    enrollmentdata.courseCategory = course.electiveType
+                }else{
+                    enrollmentdata.courseCategory = courseinfo.category
+                }
+                enrollmentdata.semester = studentinfo.currentSemester
+                enrollmentdata.branch = studentinfo.branch
+
+                if(studentinfo.currentSemester%2==0){
+                    enrollmentdata.semType="even"
+                }else{
+                    enrollmentdata.semType="odd"
+                }
+                
+                const newenrollmentdata = new EnrollmentModel(enrollmentdata)
+                 
+                const result = await newenrollmentdata.save()
+                
+                if(!result){
+                    message = "Unable to save the changes"
+                    success = false
+                    invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+            }
+        }
+       
+        if(!success){
+            res.status(200).json({success:success,message:message,invalidCourseCode,invalidregisternumber})
+        }
+        else{
+            res.status(200).json({success:success,message:message})
+        }
+    }catch(error){
+        console.log(error)
+        res.status(400).json({success:false,message:"Something wrong happened",Error:error});
+    }
+}
+
+// Remove students from enrollment(i.e: The doc will be completely removed)
+export const CE_Admin_removestudents = async(req, res) => {
+    try{
+
+        const {courses} = req.body
+        let success = true
+        let message = "All the changes have been modified"
+        let invalidCourseCode = []
+        let invalidregisternumber = []
+
+        for(let course of courses){          
+            const courseinfo = await CurriculumModel.findOne({courseCode:course.courseCode})
+           
+            
+            if(!courseinfo){
+                message = "Course Code was not found"
+                success = false
+                invalidCourseCode.push(course.courseCode)
+                continue
+            }
+
+            for(let student of course.students){
+               
+                const studentinfo = await StudentsModel.findOne({register:student.register})
+                
+                if(!studentinfo){
+                    message = "Student register number was not found"
+                    success = false
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+               
+                const foundenrollmentdata = await EnrollmentModel.findOneAndDelete({courseCode:courseinfo._id,studentId:studentinfo._id})
+                console.log(foundenrollmentdata)
+               
+            }
+        }
+       
+        if(!success){
+            res.status(200).json({success:success,message:message,invalidCourseCode,invalidregisternumber})
+        }
+        else{
+            res.status(200).json({success:success,message:message})
+        }
+    }catch(error){
+        console.log(error)
+        res.status(400).json({success:false,message:"Something wrong happened",Error:error});
+    }
+}
 
 
 /////////////////////// RESULT MODULE ///////////////////////
 
+// Display students
+export const Result_Admin_GetResults = async(req, res) => {
+    try{
+        
+        const registeredStudents =[]
+        await ExternalsModel.find({batch:{$in:req.body.batch},branch:{$in:req.body.branch}}).populate("studentId courseId").then(data => {
+        data.map((d,k)=>{
+            // console.log(d.courseId)
+            registeredStudents.push({curriculumId:d.courseId._id,studentId:d.studentId._id})
+        })
+        // console.log(registeredStudents)
+        // for(let dat of data){
+            //     console.log(dat.courseId._id)
+            // }
+        // registeredStudents.push({curriculumId:data.courseId._id,studentId:data.studentId._id})
+    })
+    let results = []
+    for(let each of registeredStudents){
+        const enrollmentdata = await EnrollmentModel.findOne({studentId:each.studentId,courseCode:each.curriculumId,semester:{$in:req.body.sem}}).populate("studentId courseCode")
+        console.log(enrollmentdata)
+        if(enrollmentdata){
+            await ExternalsModel.find({studentId:enrollmentdata.studentId,courseId:enrollmentdata.courseCode._id}).populate("studentId courseId").then(data => {
+                data.map((d,k)=>{
+                    results.push(d)
+                })
+            })
+        }
+    }
+        console.log(results.length)
+        
+        // console.log(students)
+        // console.log(dbresults)
+        
+    
+        res.status(200).json({success:true,message:"success",results})
+    }catch(error){
+        console.log(error)
+        res.status(400).json({success:false,message:"wrong"})
+    }
+}
+
+// Upload students
+export const Result_Admin_Upload =async(req, res)=>{
+    try{
+        let file = req.files.data
+        // console.log(req.files.result)
+        let load = await excelToJson(file)
+        // console.log(load)
+        let cnt=0
+            for(let student of load){
+                cnt++
+                const studentinfo = await StudentsModel.findOne({register:student.register})
+                if(studentinfo){
+                    // console.log(studentinfo)
+                    const courseincurriculumm = await CurriculumModel.findOne({courseCode:student.courseCode})
+                    // const courseincurriculumm = await EnrollmentModel.find({courseCode:student.courseCode}).populate("studentId courseCode")
+                    
+                    if(courseincurriculumm){
+                        const externalsData = await ExternalsModel.findOne({studentId:studentinfo._id,courseId:courseincurriculumm._id})
+                        //console.log(externalsData)
+                        if(!externalsData){
+                            //////new data
+                            const Studentdata = {
+                                studentId:studentinfo._id,
+                                courseId:courseincurriculumm._id,
+                                attempt:student.attempt,
+                                result:student.result
+                            }
+                            const studata = new ExternalsModel(Studentdata)
+                            const result = await studata.save()
+                            console.log(result)
+                            if(student.result == "P"){
+                                const enrollmentData = await EnrollmentModel.findOne({studentId:studentinfo._id,courseCode:courseincurriculumm._id})
+                                if(enrollmentData){
+                                    enrollmentData.type="normal"
+                                    await enrollmentData.save()
+                                    // continue
+                                }
+                            }
+                            if(student.result == "RA"){
+                                const enrollmentData = await EnrollmentModel.findOne({studentId:studentinfo._id,courseCode:courseincurriculumm._id})
+                                if(enrollmentData){
+                                    enrollmentData.type="RA"
+                                    await enrollmentData.save()
+                                    // console.log(res)
+                                    
+                            }
+                        }
+                        if(student.result == "SA"){
+                            const enrollmentData = await EnrollmentModel.findOne({studentId:studentinfo._id,courseCode:courseincurriculumm._id})
+                            if(enrollmentData){
+                                enrollmentData.type="SA"
+                                await enrollmentData.save()
+                                // console.log(res)
+                                
+                            }
+                        }
+                    }   
+                        else{
+                            // console.log(student.attempt)
+                            externalsData.attempt = student.attempt
+                            externalsData.result = student.result
+                            await externalsData.save()
+                            // console.log(res) 
+                            if(student.result == "RA"){
+                                const enrollmentData = await EnrollmentModel.findOne({studentId:studentinfo._id,courseCode:courseincurriculumm._id})
+                                if(enrollmentData){
+                                    enrollmentData.type="RA"
+                                    await enrollmentData.save()
+                                    // console.log(res)
+                                    
+                                }
+                            }
+                            if(student.result == "SA"){
+                                const enrollmentData = await EnrollmentModel.findOne({studentId:studentinfo._id,courseCode:courseincurriculumm._id})
+                                if(enrollmentData){
+                                    enrollmentData.type="SA"
+                                    await enrollmentData.save()
+                                    // console.log(res)
+                                    
+                                }
+                            }
+                            if(student.result == "P"){
+                                const enrollmentData = await EnrollmentModel.findOne({studentId:studentinfo._id,courseCode:courseincurriculumm._id})
+                                if(enrollmentData){
+                                    enrollmentData.type="normal"
+                                    await enrollmentData.save()
+                                    // continue
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        ///course code not available in database
+                        console.log("Coursecode was not in curriculum database")
+                    }
+                }
+                else{
+                    ////register number not availalbe in database
+                    console.log("Student register number is not in Students database")
+                }
+            }
+            console.log(cnt)
+            res.status(200).json({success:true, msg:"Results pushed into database"})
+        }
+    catch(error){
+        console.log(error);
+        res.status(400).json({success:false,message:"Something wrong happened",Error:error});
+    }
+}
 
 
 /////////////////////// REGISTRATION MODULE ///////////////////////
 
+// Fetch and send registered students list..
+export const CR_Admin_getRegisteredstudentslist = async(req, res) => {
+    try{
+        const { batch, sem, branch } = req.body
+        
+        const data = await EnrollmentModel.find({batch:batch, branch:{$in:branch},semester:{$in:sem},enrolled:true,approval:{$in:[-14,-13,-12,-11,10,11,12,13,14]}}, {courseCode:1,studentId:1,branch:1,enrolled:1,approval:1,_id:0}).populate("courseCode", {courseCode:1,title:1}).populate("studentId",{firstName:1,register:1,branch:1,batch:1})     
+             
+        let result = []
+        for(let doc of data) {
+            let flag = result.some(rdoc =>  rdoc.courseCode == doc.courseCode.courseCode)
+            if(flag) continue
+            
+            const obj = {
+                courseCode: doc.courseCode.courseCode,
+                courseTitle: doc.courseCode.title,
+                students: data.filter(ndoc => ndoc.courseCode.courseCode == doc.courseCode.courseCode && { registerNumber: doc.studentId.register, StudentName: doc.studentId.firstName })
+            }
+            result.push(obj)
+        }
+   
+        let courses = []
+        for(let i of result){
+            let nstudents = []
+            let studentcount = 0
+            for(let student of i.students){
+                
+                studentcount = studentcount + 1
+                const nstudent = {
+                    registernumber : student.studentId.register,
+                    studentname : student.studentId.firstName,
+                    branch : student.studentId.branch,
+                    batch : student.studentId.batch,
+                    enrolled : student.enrolled,
+                    approval : student.approval
+                }
+                nstudents.push(nstudent)
+            }
+            const course = {
+                courseCode : i.courseCode,
+                courseTitle: i.courseTitle,
+                studentsenrolled:studentcount,
+                studentsList:nstudents
+            }
+            courses.push(course)
+        }
+
+        res.status(200).json(courses)
+        
+        //     enrollmentdata.forEach(groupdata)
+        // //    finaldetails
+        
+        //     function groupdata(eachcourse){
+            
+            //         const course = {
+                //            courseCode : eachcourse.courseCode.courseCode,
+                //            courseTitle: eachcourse.courseCode.title,
+                //         //    studentsEnrolled:
+    //             studentsList:[{sturegnum:eachcourse.studentId.register,studentname:eachcourse.studentId.firstName}]
+    //         }
+    //         courses.push(course)
+
+    //         // return courses
+    //     }
+        // console.log(courses)
+        //     res.status(200).json({success:true,message:"Enrolled student details are fetched",totalcourse:enrollmentdata.length,courses})
+        
+    }catch(error){
+        console.log(error);
+        res.status(400).json({success:false,message:"Something wrong happened",Error:error});
+    }
+}
+
+// Approve registered students
+export const CR_Admin_approvestudents = async(req, res) => {
+    try{
+        const {courses} = req.body
+        let success = true
+        let message = "All the changes have been modified"
+        let invalidCourseCode = []
+        let invalidregisternumber = []
+
+        for(let course of courses){          
+            const courseinfo = await CurriculumModel.findOne({courseCode:course.courseCode})
+           
+            if(!courseinfo){
+                message = "Course Code was not found"
+                console.log(message)
+                success = false
+                invalidCourseCode.push(course.courseCode)
+                continue
+            }
+            for(let student of course.students){
+               
+                const studentinfo = await StudentsModel.findOne({register:student.register})
+                
+                if(!studentinfo){
+                    message = "Student register number was not found"
+                    console.log(message)
+                    success = false
+                    
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+               
+                const enrollmentdata = await EnrollmentModel.findOne({courseCode:courseinfo._id,studentId:studentinfo._id})
+               
+                if(!enrollmentdata){
+                    message = "These Students have not enrolled for given courses"
+                    console.log(message)
+                    success = false
+                    invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+
+                if(enrollmentdata.approval == 14 && enrollmentdata.enrolled){
+                    message = "These students are already enrolled && approved"
+                    console.log(message)
+                    success = false
+                    invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+
+                if(student.approval == -14){
+                    enrollmentdata.approval = -14
+                }
+                
+                if(student.approval == 14){
+                    enrollmentdata.approval = student.approval
+                }
+
+                const result = await enrollmentdata.save()
+                
+                if(!result){
+                    message = "Unable to save the changes"
+                    console.log(message)
+                    success = false
+                    invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+            }
+        }
+       
+        if(!success){
+            res.status(200).json({success:success,message:message,invalidCourseCode,invalidregisternumber})
+        }
+        else{
+            res.status(200).json({success:success,message:message})
+        }
+  
+        
+    }catch(error){
+        console.log(error)
+        res.status(400).json({success:false,message:"Something wrong happened",Error:error});
+    }
+}
+
+// Add students to the registration
+export const CR_Admin_addstudents = async(req, res) => {
+    try{
+        const {courses} = req.body
+
+        let success = true
+        let message = "All the changes have been modified"
+        let invalidCourseCode = [], invalidregisternumber = []
+
+        for(let course of courses){          
+            const courseinfo = await CurriculumModel.findOne({courseCode:course.courseCode})
+            
+            if(!courseinfo){
+                message = "Course Code was not found"
+                console.log(message)
+                success = false
+                invalidCourseCode.push(course.courseCode)
+                continue
+            }
+
+            for(let student of course.students){
+               
+                const studentinfo = await StudentsModel.findOne({register:student.register})
+                
+                if(!studentinfo){
+                    message = "Student register number was not found"
+                    console.log(message)
+                    success = false
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+               
+                const foundenrollmentdata = await EnrollmentModel.findOne({courseCode:courseinfo._id,studentId:studentinfo._id})
+               
+                if(foundenrollmentdata){
+                    message = student.register + "This Student have already registeredfor given course " + course.courseCode
+                    console.log(message)
+                    success = false
+                    invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+                const enrollmentdata = {
+                    enrolled : true,
+                    approval : 14
+                }
+
+                enrollmentdata.type = "normal"
+                enrollmentdata.courseCode = courseinfo._id
+                enrollmentdata.batch = studentinfo.batch
+                enrollmentdata.regulation = studentinfo.regulation
+                enrollmentdata.courseCategory = courseinfo.category
+                enrollmentdata.studentId = studentinfo._id
+                enrollmentdata.semester = studentinfo.currentSemester
+                enrollmentdata.branch = studentinfo.branch
+
+                if(studentinfo.currentSemester%2==0){
+                    enrollmentdata.semType="even"
+                }else{
+                    enrollmentdata.semType="odd"
+                }
+
+                const newenrollmentdata = new EnrollmentModel(enrollmentdata)
+                 
+                const result = await newenrollmentdata.save()
+                
+                if(!result){
+                    message = "Unable to save the changes"
+                    console.log(message)
+                    success = false
+                    invalidCourseCode.push(course.courseCode)
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+            }
+        }
+       
+        if(!success){
+            res.status(200).json({success:success,message:message,invalidCourseCode,invalidregisternumber})
+        }
+        else{
+            res.status(200).json({success:success,message:message})
+        }
+    }catch(error){
+        console.log(error)
+        res.status(400).json({success:false,message:"Something wrong happened",Error:error});
+    }
+}
+
+// Remove from registration
+// The students will be pushed back to enrollment phase
+export const CR_Admin_removestudents = async(req, res) => {
+    try{
+
+        const {courses} = req.body
+        let success = true
+        let message = "All the changes have been modified"
+        let invalidCourseCode = []
+        let invalidregisternumber = []
+
+        for(let course of courses){
+            const courseinfo = await CurriculumModel.findOne({courseCode:course.courseCode})
+            
+            
+            if(!courseinfo){
+                message = "Course Code was not found"
+                console.log(message)
+                success = false
+                invalidCourseCode.push(course.courseCode)
+                continue
+            }
+
+            for(let student of course.students){
+               
+                const studentinfo = await StudentsModel.findOne({register:student.register})
+                
+                if(!studentinfo){
+                    message = "Student register number was not found"
+                    console.log(message)
+                    success = false
+                    invalidregisternumber.push(student.register)
+                    continue
+                }
+               
+                const foundenrollmentdata = await EnrollmentModel.findOne({courseCode:courseinfo._id,studentId:studentinfo._id})
+                if(foundenrollmentdata){
+                    foundenrollmentdata.approval = 4
+                    await foundenrollmentdata.save().then(p=>console.log(p))
+                }else{
+                    console.log("The enrollment Collection was not found for student" + studentinfo.register + " for coursecode: "+ courseinfo.courseCode)
+                }
+                // console.log(foundenrollmentdata)
+               
+            }
+        }
+       
+        if(!success){
+            res.status(200).json({success:success,message:message,invalidCourseCode,invalidregisternumber})
+        }
+        else{
+            res.status(200).json({success:success,message:message})
+        }
+    }catch(error){
+        console.log(error)
+        res.status(400).json({success:false,message:"Something wrong happened",Error:error});
+    }
+}
 
 
 /////////////////////// EXAM FEE MODULE ///////////////////////
