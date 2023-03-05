@@ -10,7 +10,7 @@ const FacultySchema = new Schema({
 
     email: { type: String, required: true },
 
-    personalEmail: { type: String, required: true },
+    personalEmail: { type: String },
 
     mobile: { type: String, required: true },
 
@@ -34,7 +34,7 @@ const FacultySchema = new Schema({
 
     branch: { type: String, required: true },
     
-    title: { type: String, required:true },
+    title: { type: String },
 
     firstName: { type: String, required: true },
 

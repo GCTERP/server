@@ -211,6 +211,23 @@ export const addWorkingDay = async (req, res) => {
     } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
 }
 
+export const getMinMaxDate = async (req, res) => {
+
+    try {
+
+        let minMaxDate = await CalendarModel.aggregate([
+            {
+                "$group":{
+                    "_id": null,
+                    "min": {"$min": "$date"},
+                    "max": {"$max": "$date"}
+                }
+            }
+        ])
+        res.status(200).json(...minMaxDate)
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
 export const getAllDates = async (req, res) => {
 
     try {
@@ -336,8 +353,8 @@ export const createMetadata = async (req, res) => {
             }
 
         } else {
-
-            let dayOrder = data[0].order ?? 1
+            
+            let dayOrder = (data.length > 0) ? (data[0].order ?? 1): 1
             for (let doc of data) {
 
                 if(!doc.batches.includes(batch)) doc.batches.push(batch)
@@ -365,6 +382,7 @@ export const createMetadata = async (req, res) => {
         //Creates a doc in semester metadata
         if (check.length==0){ 
             await SemesterMetadataModel.create(metaData)
+            await StudentsModel.updateMany({ batch: batch, status: "active" }, {$set: { currentSemester: semester }})
             forCache.push(metaData)
             setCache("SEMESTER_METADATA", forCache)
             res.status(200).send("Semester metadata created successfully!")
@@ -387,10 +405,28 @@ export const updateMetadata = async (req, res) => {
 
         await SemesterMetadataModel.updateOne( {_id: id}, updates )
 
-        let forCache = await SemesterMetadataModel.find({}, { createdAt: 0, updatedAt: 0, __v: 0 })
+        let forCache = await SemesterMetadataModel.find({}, { createdAt: 0, updatedAt: 0, __v: 0, facultyAdvisor: 0 })
         setCache("SEMESTER_METADATA", forCache)
 
         res.status(200).send("Semester metadata updated successfully!")
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
+}
+
+export const getFAMeta = async (req, res) => {
+
+    try {
+
+        let faMeta = await SemesterMetadataModel.find({}, { _id: 1, facultyAdvisor: 1, batch: 1, sem: 1 }).populate("facultyAdvisor.faculty", {firstName: 1, lastName: 1, title: 1 }).sort({createdAt: "desc"})
+        faMeta = faMeta.map( (doc) => {
+            doc = doc.toObject()
+            doc.facultyAdvisor = doc.facultyAdvisor.map( (dept) => {
+                dept.faculty = ((dept.faculty.title ?? "" )+" "+dept.faculty.firstName+" "+dept.faculty.lastName).trim()
+                return {faculty: dept.faculty, branch: dept.branch}
+            } )
+            return doc
+        } )
+        res.status(200).json(faMeta)
 
     } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
@@ -412,6 +448,8 @@ export const manageBranch = async (req, res) => {
 
         let data = req.body
 
+        delete data._id
+        
         await BranchModel.updateOne( { branch: data.branch }, data, { upsert: true } )
 
         let branch = await BranchModel.find( {}, { createdAt: 0, updatedAt: 0, __v: 0 } )
@@ -440,9 +478,7 @@ export const manageElectives = async (req, res) => {
 
         let data = req.body
 
-        await ElectiveMetadataModel.updateOne( { branch: data.branch }, data, { upsert: true } )
-
-        let electives = await ElectiveMetadataModel.find( {}, { createdAt: 0, updatedAt: 0, __v: 0 } )
+        await ElectiveMetadataModel.updateOne( { regulation: data.regulation, branch: data.branch, semester: data.semester }, data, { upsert: true } )
 
         res.status(200).send("Electives updates successfully!")
 
@@ -453,9 +489,9 @@ export const getElectives = async (req, res) => {
 
     try {
 
-        let data = await ElectiveMetadataModel.find( {}, { createdAt: 0, updatedAt: 0, __v: 0 } )
+        let electives = await ElectiveMetadataModel.find( {}, { createdAt: 0, updatedAt: 0, __v: 0 } )
 
-        res.status(200).json(data)
+        res.status(200).json(electives)
 
     } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
@@ -469,7 +505,13 @@ export const getStudentUsers = async (req, res) => {
 
         // Finds students by batch and returning the result with only required fields
         let students = await StudentsModel.find({ batch }, { __v: 0, createdAt: 0, updatedAt: 0, regulation: 0, degree: 0, dob: 0, section: 0, currentSemester: 0, mobile: 0, personalEmail: 0 })
-
+        students = students.map( (student) => {
+            student = student.toObject()
+            let fullName = (student.firstName+" "+student.lastName).trim()
+            let register = student.register
+            delete student.register
+            return {register: register, fullName: fullName, ...student}
+        } )
         res.status(200).json(students)
 
     } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
@@ -507,6 +549,12 @@ export const getFacultyUser = async (req, res) => {
     try {
 
         let faculty = await FacultyModel.find({}, { __v: 0, createdAt: 0, updatedAt: 0, admin: 0, cfa: 0, hod: 0, pc: 0, ttc: 0, fa: 0, ci: 0, primaryRole: 0, address: 0, title: 0, type: 0, mobile: 0, personalEmail: 0 })
+
+        faculty = faculty.map( (doc) => {
+            doc = doc.toObject()
+            doc.fullName = doc.firstName+" "+doc.lastName
+            return doc
+        } )
 
         res.status(200).json(faculty)
 
@@ -607,15 +655,19 @@ export const downloadStudents = async (req, res) => {
 // Uploads the students
 export const uploadStudents = async (req, res) => {
 
+    let data = {}, trash = {}
     try {
 
         let file = req.files.data
 
         let load = await excelToJson(file), create = [], update = []
 
-        let { data, trash } = filterValidStudentDocuments(load)
+        let obj = filterValidStudentDocuments(load)
 
-        let result = await StudentsModel.find({ register: { $in: data.map(doc => doc.register) } }, { register: 1 })
+        data = obj.data
+        trash = obj.trash
+
+        let result = await StudentsModel.find({ register: { $in: data.map(doc => doc.register) } }, { register: 1, _id: 1 })
 
         // Find existing documents
         for (let doc of data) {
@@ -646,7 +698,10 @@ export const uploadStudents = async (req, res) => {
 
         res.status(200).json({ documents, trash: [...trash] })
 
-    } catch (err) { res.status(400).send('Request Failed: ' + err.message) }
+    } catch (err) {
+        await StudentsModel.deleteMany({batch: { $in: [...new Set(data.map( doc => doc.batch ))] }})
+        res.status(400).send('Request Failed: ' + err.message)
+    }
 }
 
 const studentCreation = async (data) => {
@@ -720,9 +775,35 @@ export const getFaculty = async (req, res) => {
 
         let faculty = await FacultyModel.find({}, { __v: 0, createdAt: 0, updatedAt: 0 })
 
+        faculty = faculty.map( (doc) => {
+            doc = doc.toObject()
+            doc.fullName = doc.firstName+" "+doc.lastName
+            return doc
+        } )
+
         res.status(200).json(faculty)
 
     } catch (err) { res.status(400).send("Request Failed: " + err.message) }
+}
+
+export const getFacultyAdvisor = async (req, res) => {
+
+    try {
+
+        let fa = await FacultyModel.find({ fa: true }, { _id: 1, branch: 1, firstName: 1, lastName: 1, title: 1 })
+
+        fa = fa.map( (doc) => {
+            doc = doc.toObject()
+            doc.fullName = ((doc.title ?? "" )+" "+doc.firstName+" "+doc.lastName).trim()
+            delete doc.firstName
+            delete doc.lastName
+            delete doc.title
+            return doc
+        } )
+
+        res.status(200).json(fa)
+
+    } catch(err) { res.status(400).send('Request Failed: '+ err.message) }
 }
 
 export const uploadFaculty = async (req, res) => {

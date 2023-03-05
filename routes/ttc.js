@@ -1,7 +1,7 @@
 import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js";
 
-import { dataload, getdailyjob, getDemo, getGroups, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable, postUt } from "../controllers/TTCController.js"
+import { dataload, getdailyjob, getDemo, getGroups, getProfile, getStaff, getTimetable, getUt, postGroups, postStaff, postTimetable, postUt, profileRequest } from "../controllers/TTCController.js"
 
 
 const router = express.Router()

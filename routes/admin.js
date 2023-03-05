@@ -31,12 +31,16 @@ router.put("/calendar/manage/batch", manageBatchInCalendar)
 
 router.put("/calendar/manage/saturday", manageSaturday)
 
+router.get("/calendar/minmaxdate", getMinMaxDate)
+
 // SemesterMetadata Module
 router.post("/semestermeta/create", createMetadata)
 
 router.get("/semestermeta", getMetadata)
 
 router.put("/semestermeta/update", updateMetadata)
+
+router.get("/semestermeta/fa", getFAMeta)
 
 // Branch Module
 router.post("/branch/manage", manageBranch)
@@ -79,6 +83,8 @@ router.get("/faculty/download", downloadFaculty)
 router.get("/faculty", getFaculty)
 
 router.post("/faculty/add", addFaculty)
+
+router.get("/faculty/fa", getFacultyAdvisor)
 
 /////////////////////// CURRICULUM MODULE ///////////////////////
 router.post("/curriculum/upload", uploadCurriculum)
