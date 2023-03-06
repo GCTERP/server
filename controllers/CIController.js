@@ -33,16 +33,11 @@ import { RequestsModel } from "../models/RequestsModel.js";
 /////////////////////// ATTENDANCE MODULE ///////////////////////
 
 
-// export const demo = async (req,res) => {
-//     try{
-//         let temp = {
-//             begin: new Date('2023-02-01T00:00:00'),
-//             end: new Date('2023-06-01T00:00:00')
-//         }
-//         await SemesterMetadataModel.updateMany({}, {semester:temp})
-//         res.status(200).json(await AttendanceModel.find({}));
-//     } catch(err) { res.status(400).send("Request Failed: " + err.message); }
-// }
+export const demo = async (req,res) => {
+    try{
+        res.status(200).json(await EnrollmentModel.find({}));
+    } catch(err) { res.status(400).send("Request Failed: " + err.message); }
+}
 
 
 //Completed...
@@ -87,7 +82,7 @@ export const getMasterAttendance = async (req, res) => {
             period.courseName = period.courseId.courseId.title;
             period.courseId = period.courseId._id;
         }
-
+        console.log(result)
         res.status(200).send(result);
 
     } catch (err) { res.status(400).send("Request Failed: " + err.message); }
@@ -282,6 +277,11 @@ export const getAttendancePercent = async (req, res) => {
                         total: { $count: {} },
                         present: { $sum: "$presented" }
                     }
+                },
+                {
+                    $sort:{
+                        _id:1
+                    }
                 }
             ]
         )
@@ -292,9 +292,15 @@ export const getAttendancePercent = async (req, res) => {
         //Regularize data for front-end
         for (let student of data) {
             student.register = student._id.register
-            student.name = student._id.firstName + " " + student._id.lastName
-            student.percent = student.present / student.total * 100
+
+            student.name = student._id.firstName + " " +student._id.lastName
+            student.Total = student.total
+            student.Present = student.present
+            student.percent = student.present/student.total * 100
+            
             delete student._id
+            delete student.total
+            delete student.present
         }
 
         res.status(200).json(data)

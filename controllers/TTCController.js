@@ -36,6 +36,10 @@ import { excelToJson } from "../utilities/excel-parser.js"
 
 export const getDemo = async (req,res) =>{
     try{
+        await CourseDetailsModel.deleteMany({})
+        await EnrollmentModel.deleteMany({})
+        await MasterTimetableModel.deleteMany({})
+        await AttendanceModel.deleteMany({})
         res.status(200).send(await CourseDetailsModel.find({}));
     } catch(err) { res.status(400).send("Request Failed: " + err.message); }
 }
@@ -44,10 +48,10 @@ export const dataload = async (req,res) => {
     
     try{
 
-        await EnrollmentModel.deleteMany({})
-        await CourseDetailsModel.deleteMany({})
+        // await EnrollmentModel.deleteMany({})
+        // await CourseDetailsModel.deleteMany({})
 
-        const excel = XLSX.readFile("C:/Users/THIYANESH S/Downloads/IT_Enrollment.xlsx")
+        const excel = XLSX.readFile("C:/Users/THIYANESH S/Downloads/data1.xlsx")
 
         const source = excel.Sheets[excel.SheetNames[0]]
     
@@ -99,7 +103,7 @@ export const getStaff = async (req,res) => {
                 let data1 = await EnrollmentModel.aggregate(
                     [
                         {
-                            "$match": {semester:sem.sem, batch:sem.batch, branch:branch, type: "theory"}
+                            "$match": {semester:sem.sem, batch:sem.batch, branch:branch, courseType: "theory"}
                         }, 
                         {
                             $group:{_id:"$courseCode"}
@@ -117,7 +121,7 @@ export const getStaff = async (req,res) => {
                 }
 
             }else{ 
-
+                console.log("Wrong")
                 //Regularize data for front-end...
                 for (let course of courses){
                     course.courseName = course.courseId.title
@@ -305,10 +309,10 @@ export const postTimetable = async (req,res) => {
         
         let { data, ed, branch } = req.body
         ed = new Date(ed)
-        
+        console.log(data)
         //Iterate over each Course
         for(let course of data){
-
+            console.log(course)
             let temp = {
                 effectiveDate: ed,
                 schedule: course.schedule
@@ -317,7 +321,7 @@ export const postTimetable = async (req,res) => {
             if(course.courseName == "Mini Project" || course.courseName == "Project Work"){
                 await CourseDetailsModel.updateMany({courseId:course.courseId, batch:course.batch, semester:course.semester, branch: branch}, {$set: {newSchedule: temp}} )
             }
-
+            console.log(temp)
             await CourseDetailsModel.updateOne({_id:course._id}, {$set: {newSchedule: temp}})
         
         }
@@ -340,7 +344,7 @@ export const getUt = async (req, res) => {
         let sems = await SemesterMetadataModel.find({},{ _id:0, sem:1, batch:1 }).sort({date:-1}).limit(3)
         
         //Get All Courses of Current Batch and Semester...
-        let result = await CourseDetailsModel.find({branch:branch,$or:[{semester:sems[0].sem,batch:sems[0].batch},{semester:sems[1].sem,batch:sems[1].batch},{semester:sems[2].sem,batch:sems[2].batch}]}, {_id:1, courseCode:1, unitSchedule:1, batch:1 }).populate("courseId", {title:1})
+        let result = await CourseDetailsModel.find({branch:branch,type:"theory",$or:[{semester:sems[0].sem,batch:sems[0].batch},{semester:sems[1].sem,batch:sems[1].batch},{semester:sems[2].sem,batch:sems[2].batch}]}, {_id:1, courseCode:1, unitSchedule:1, batch:1 }).populate("courseId", {title:1})
         result = result.map(ut => ({ ...ut._doc }))
         
         //Regularize Data for front-end...
@@ -458,14 +462,21 @@ export const getGroups = async (req,res) => {
             let data1 = await EnrollmentModel.aggregate(
                 [
                     {
-                        "$match": {semester:sem.sem, batch:sem.batch, branch:branch, type:"practical"}
-                    }, 
+                        "$match": {semester:sem.sem, batch:sem.batch, branch:branch, courseType:"practical"}
+                    },
                     {
                         $group:{
                             _id:{"courseCode":"$courseCode","groupNo":"$groupNo", "courseId":"$courseId"}, 
                             students:{ $push: "$studentId"}
                         }
-                    }
+                    },
+                    {
+                        "$sort": {
+                            "_id.groupNo":1
+                        }
+                    }, 
+                    
+                    
                 ]
             )
             
@@ -556,7 +567,7 @@ export const postGroups = async (req,res) => {
 
                 //Update CourseDetail id and Group No in Enrollment
                 for(let student of course.studentId){
-                    await EnrollmentModel.updateOne( { courseCode:course.courseId, studentId:student, type: "practical" }, {$set:{courseId:course.coursId, groupNo:course.groupNo}})
+                    await EnrollmentModel.updateOne( { courseCode:course.courseId, studentId:student, courseType: "practical" }, {$set:{courseId:course.coursId, groupNo:course.groupNo}})
                 }
 
             }else{
@@ -572,6 +583,7 @@ export const postGroups = async (req,res) => {
                     branch: branch,
                     batch: course.batch,
                     groupNo: course.groupNo,
+                    facultyId:course.facultyId,
                     schedule: [],
                     unitSchedule:[
                         {
@@ -594,7 +606,7 @@ export const postGroups = async (req,res) => {
 
                 //Update CourseDetail id and Group No in Enrollment
                 for(let student of course.studentId){
-                    await EnrollmentModel.updateOne({studentId:student, courseCode:course.courseId, type:"practical"},{$set:{courseId:data1._id, groupNo:data1.groupNo}} )
+                    await EnrollmentModel.updateOne({studentId:student, courseCode:course.courseId, courseType:"practical"},{$set:{courseId:data1._id, groupNo:data1.groupNo}} )
                 }
 
                 data.push({...data1})
@@ -620,11 +632,11 @@ export const getdailyjob = async (req,res) => {
         console.log(await CalendarModel.find({}).sort({date:1}))
         //await MasterTimetableModel.deleteMany({})
         let periods = []
-        let date1 = new Date(new Date('2023-02-01').toJSON().slice(0, 10))
+        let date1 = new Date(new Date('2023-02-15').toJSON().slice(0, 10))
             
         //Create Days for Feb...
-        for(let i=0;i<80;i++){
-            let date = new Date(new Date('2023-02-01').toJSON().slice(0, 10))
+        for(let i=0;i<5;i++){
+            let date = new Date(new Date('2023-02-15').toJSON().slice(0, 10))
             date.setDate(date1.getDate()+i)
             console.log(i, date)
             let cal = await CalendarModel.find({date:date})
