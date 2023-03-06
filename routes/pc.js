@@ -1,7 +1,7 @@
 import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-import {  } from "../controllers/PCController.js"
+import { getProfile, profileRequest, CE_PC_approvestudents, CE_PC_getenrolledstudentslist, CR_PC_approvestudents, CR_PC_getRegisteredstudentslist } from "../controllers/PCController.js"
 
 const router = express.Router()
 
@@ -51,6 +51,9 @@ router.get("/curriculum", getCurriculum)
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
 
+router.route('/enrolment').get(CE_PC_getenrolledstudentslist)
+
+router.route('/enrolment/approvestudents').post(CE_PC_approvestudents)
 
 
 /////////////////////// RESULT MODULE ///////////////////////
@@ -58,6 +61,10 @@ router.get("/curriculum", getCurriculum)
 
 
 /////////////////////// REGISTRATION MODULE ///////////////////////
+
+router.route('/courseregistration').get(CR_PC_getRegisteredstudentslist)
+
+router.route('/courseregistration/approvestudents').post(CR_PC_approvestudents)
 
 
 
@@ -80,5 +87,12 @@ router.get("/curriculum", getCurriculum)
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+
+/////////////////////// REQUEST MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
 
 export default router

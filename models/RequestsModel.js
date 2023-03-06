@@ -10,17 +10,17 @@ const RequestsSchema = new Schema({
 
     to: { type: Schema.Types.ObjectId, required: true, ref: 'Faculty' },
 
-    other: { type: Schema.Types.ObjectId, refPath: 'otherRef' },
+    other: { type: Schema.Types.ObjectId, refPath: 'otherRef', default: null },
 
     otherRef: { type: String },
 
-    body: { type: String },
+    body: { type: Schema.Types.Mixed },
 
     type: { type: String, required: true },
 
     approved: { type: Boolean, default: false },
  
-    deadline: { type: Schema.Types.Date },
+    deadline: { type: Schema.Types.Date, default: null },
 
     done: { type: Boolean, default: false }
 

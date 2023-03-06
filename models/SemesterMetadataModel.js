@@ -9,6 +9,10 @@ const SemesterMetadataSchema = new Schema({
     batch: { type: Number, required: true },
 
     regulation: { type: Number, required: true },
+    
+    begin: { type: Schema.Types.Date },
+    
+    end: { type: Schema.Types.Date },
 
     ut: {
 
@@ -74,14 +78,6 @@ const SemesterMetadataSchema = new Schema({
 
     },
 
-    semester: {
-
-        begin: { type: Schema.Types.Date },
-    
-        end: { type: Schema.Types.Date }
-
-    },
-
     valueAddedCourse: [
         {
 
@@ -138,15 +134,7 @@ const SemesterMetadataSchema = new Schema({
     
     },
 
-    addOnEligible: [
-        {
-
-            branch: { type: String },
-        
-            course: { type: String }
-        
-        }
-    ],
+    addOnEligible: { type: Boolean, default: false },
 
     downloadHallticket: { type: Boolean, default: false }
 

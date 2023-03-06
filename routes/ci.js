@@ -1,6 +1,7 @@
 import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
+
 import { demo, getAttendance, getAttendancePercent, getCourses, getMasterAttendance, getStaffTimetable, getStudentTimetable, postAttendance } from "../controllers/CIController.js"
 
 const router = express.Router()
@@ -88,5 +89,11 @@ router.get("/demo", demo);
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+/////////////////////// PROFILE ///////////////////////
+router.get("/profile", getProfile)
+
+
+/////////////////////// REQUEST MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
 
 export default router

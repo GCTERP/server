@@ -18,7 +18,7 @@ const StudentsSchema = new Schema({
 
     currentSemester: { type: Number, required: true },
 
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true },
 
     personalEmail: { type: String },
 

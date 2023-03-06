@@ -2,13 +2,13 @@ import XLSX from "xlsx"
 import fs from "fs"
 
 
-export const excelToJson = async () => {
+export const excelToJson = async (file) => {
 
     let time = Date.now().toString()
 
     await file.mv("./trash/upload_" + time + ".xlsx")
 
-    const excel = XLSX.readFile("C:/Users/THIYANESH S/Downloads/IT_Enrollment.xlsx")
+    const excel = XLSX.readFile("./trash/upload_" + time + ".xlsx")
 
     const source = excel.Sheets[excel.SheetNames[0]]
 

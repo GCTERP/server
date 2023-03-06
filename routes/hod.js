@@ -1,7 +1,7 @@
 import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-import {  } from "../controllers/HODController.js"
+import { getProfile, getRequests, profileRequest, updateFacultyProfile, CE_HOD_approvestudents, CE_HOD_getenrolledstudentslist, CR_HOD_approvestudents, CR_HOD_getRegisteredstudentslist } from "../controllers/HODController.js"
 
 const router = express.Router()
 
@@ -52,6 +52,10 @@ router.get("/curriculum", getCurriculum)
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
 
+router.route('/enrolment').get(CE_HOD_getenrolledstudentslist)
+
+router.route('/enrolment/approvestudents').post(CE_HOD_approvestudents)
+
 
 
 /////////////////////// RESULT MODULE ///////////////////////
@@ -59,6 +63,10 @@ router.get("/curriculum", getCurriculum)
 
 
 /////////////////////// REGISTRATION MODULE ///////////////////////
+
+router.route('/courseregistration').get(CR_HOD_getRegisteredstudentslist)
+
+router.route('/courseregistration/approvestudents').post(CR_HOD_approvestudents)
 
 
 
@@ -81,5 +89,16 @@ router.get("/curriculum", getCurriculum)
 /////////////////////// FEEDBACK MODULE ///////////////////////
 
 
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+
+/////////////////////// REQUEST MODULE ///////////////////////
+router.post("/profile/request", profileRequest)
+
+router.get("/requests", getRequests)
+
+router.put("/requests/update", updateFacultyProfile)
 
 export default router

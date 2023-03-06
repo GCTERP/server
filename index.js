@@ -4,6 +4,8 @@ import express from "express"
 import dotenv from "dotenv"
 import cors from "cors"
 import { createClient } from "redis"
+import compression from "compression"
+import helmet from "helmet"
 
 import admin from "./routes/admin.js"
 import hod from "./routes/hod.js"
@@ -21,6 +23,8 @@ const app = express()
 app.use(express.json())
 app.use(expressFile())
 app.use(cors())
+app.use(compression())
+app.use(helmet())
 
 // Request Logs
 app.use('/', (req, res, next) => {

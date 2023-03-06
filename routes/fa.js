@@ -2,7 +2,7 @@ import express from "express"
 
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-import { demo, getAttendance, getAttendanceReport, postAttendance } from "../controllers/FAController.js"
+import { demo, getAttendance, getAttendanceReport, getProfile, getRequests, postAttendance, profileRequest, updateStudentProfile, CE_FA_approvestudents, CE_FA_getenrolledstudentslist, CR_FA_approvestudents, CR_FA_getRegisteredstudentslist} from "../controllers/FAController.js"
 
 const router = express.Router()
 
@@ -56,6 +56,9 @@ router.get("/attendanceReport", getAttendanceReport)
 
 /////////////////////// ENROLLMENT MODULE ///////////////////////
 
+router.route('/enrolment').get(CE_FA_getenrolledstudentslist)
+
+router.route('/enrolment/approvestudents').post(CE_FA_approvestudents)
 
 
 /////////////////////// RESULT MODULE ///////////////////////
@@ -63,6 +66,10 @@ router.get("/attendanceReport", getAttendanceReport)
 
 
 /////////////////////// REGISTRATION MODULE ///////////////////////
+
+router.route('/courseregistration').get(CR_FA_getRegisteredstudentslist)
+
+router.route('/courseregistration/approvestudents').post(CR_FA_approvestudents)
 
 
 
@@ -83,6 +90,17 @@ router.get("/attendanceReport", getAttendanceReport)
 
 
 /////////////////////// FEEDBACK MODULE ///////////////////////
+
+
+/////////////////////// PROFILE ////////////////////////
+router.get("/profile", getProfile)
+
+/////////////////////// REQUEST ///////////////////////
+router.get("/requests", getRequests)
+
+router.post("/requests/student/update", updateStudentProfile)
+
+router.post("/profile/request", profileRequest)
 
 
 
