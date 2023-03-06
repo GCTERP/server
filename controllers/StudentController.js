@@ -101,12 +101,12 @@ export const getMasterTimetable = async (req,res) => {
         for(let course of data){
             
             //Get All Periods of the course from mastertimetable
-            let periods  = await MasterTimetableModel.find({courseId:course.courseId}, {_id:1, date:1, period:1, marked:1})
+            let periods  = await MasterTimetableModel.find({courseId:course.courseId}, {_id:1, date:1, period:1, marked:1, dayOrder:1}).sort({date:1, period:1})
             periods = periods.map( period => period.toObject() )
             
             //Iterate over each period
             for(let period of periods){
-                
+                console.log(period.date, period.period, period.dayOrder)
                 //Check if attendance marked
                 if(period.marked == true){
                     
@@ -124,7 +124,7 @@ export const getMasterTimetable = async (req,res) => {
             }
 
         }
-
+        console.log("Data Sent")
         res.status(200).json(result)
 
     } catch(err) { res.status(400).send("Failed: " + err.message); }

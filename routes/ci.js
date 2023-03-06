@@ -1,7 +1,7 @@
 import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
-import { getAttendance, getAttendancePercent, getCourses, getMasterAttendance, getStaffTimetable, getStudentTimetable, postAttendance } from "../controllers/CIController.js"
+import { demo, getAttendance, getAttendancePercent, getCourses, getMasterAttendance, getStaffTimetable, getStudentTimetable, postAttendance } from "../controllers/CIController.js"
 
 const router = express.Router()
 
@@ -51,7 +51,7 @@ router.get("/courses", getCourses);
 router.get("/attendancePercent", getAttendancePercent);
 router.get("/staffTimetable", getStaffTimetable);
 router.get("/studentTimetable", getStudentTimetable);   
-//router.get("/demo", demo);
+router.get("/demo", demo);
 
 /////////////////////// HALLTICKET MODULE ///////////////////////
 

@@ -4,9 +4,9 @@ import fs from "fs"
 
 export const excelToJson = async () => {
 
-    //let time = Date.now().toString()
+    let time = Date.now().toString()
 
-    //await file.mv("./trash/upload_" + time + ".xlsx")
+    await file.mv("./trash/upload_" + time + ".xlsx")
 
     const excel = XLSX.readFile("C:/Users/THIYANESH S/Downloads/IT_Enrollment.xlsx")
 
@@ -14,15 +14,11 @@ export const excelToJson = async () => {
 
     const data = XLSX.utils.sheet_to_json(source)
 
-    console.log(data)
+    let result = data.map(doc => expandObject(doc))
 
-    return data
+    fs.unlinkSync("./trash/upload_" + time + ".xlsx")
 
-//    let result = data.map(doc => expandObject(doc))
-
-    //fs.unlinkSync("./trash/upload_" + time + ".xlsx")
-
-  //  return result.map(doc => rectifyObject(doc))
+    return result.map(doc => rectifyObject(doc))
 }
 
 export const jsonToExcel = (data) => {

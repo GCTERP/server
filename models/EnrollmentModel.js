@@ -6,6 +6,8 @@ const EnrollmentSchema = new Schema({
 
     type: { type: String, required: true },
 
+    courseType: { type: String, required: true },
+
     semType: { type: String, required: true },
 
     courseCode: { type: Schema.Types.ObjectId, required: true, ref: 'Curriculum' },

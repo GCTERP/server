@@ -31,16 +31,11 @@ import { StudentsModel } from "../models/StudentsModel.js";
 /////////////////////// ATTENDANCE MODULE ///////////////////////
 
 
-// export const demo = async (req,res) => {
-//     try{
-//         let temp = {
-//             begin: new Date('2023-02-01T00:00:00'),
-//             end: new Date('2023-06-01T00:00:00')
-//         }
-//         await SemesterMetadataModel.updateMany({}, {semester:temp})
-//         res.status(200).json(await AttendanceModel.find({}));
-//     } catch(err) { res.status(400).send("Request Failed: " + err.message); }
-// }
+export const demo = async (req,res) => {
+    try{
+        res.status(200).json(await EnrollmentModel.find({}));
+    } catch(err) { res.status(400).send("Request Failed: " + err.message); }
+}
 
 
 //Completed...
@@ -75,7 +70,7 @@ export const getMasterAttendance = async (req,res) => {
         console.log(end_date);
 
         //Get Periods from MasterTimetable
-        let result = await MasterTimetableModel.find({ branch:branch, facultyId:facultyId, date:{$gte:start_date, $lte:end_date}, freeze:{$gte:today} }, {date:1, courseId:1}).populate("courseId",{courseId:1, courseCode:1})
+        let result = await MasterTimetableModel.find({ branch:branch, facultyId:facultyId, date:{$gte:start_date, $lte:end_date}, }, {date:1, period:1, courseId:1}).populate("courseId",{courseId:1, courseCode:1})
         await CurriculumModel.populate(result, {path:"courseId.courseId", select: {courseCode:1, title:1}})
         
         //Regularize data for front-end
@@ -85,7 +80,7 @@ export const getMasterAttendance = async (req,res) => {
             period.courseName = period.courseId.courseId.title;
             period.courseId = period.courseId._id;
         }
-
+        console.log(result)
         res.status(200).send(result);
     
     } catch(err) { res.status(400).send("Request Failed: " + err.message); }
@@ -107,7 +102,7 @@ export const getAttendance = async (req,res) => {
         if (result.length == 0){
 
             result = await EnrollmentModel.find({courseId:courseId}, {_id:0, studentId:1}).populate("studentId", { register:1, firstName:1, lastName:1 })
-            
+            console.log(result)
             //Regularize Data for front-end
             result = result.map( student => ( student.toObject() ));
             for(let student of result){
@@ -280,6 +275,11 @@ export const getAttendancePercent = async (req,res) =>{
                         total: { $count:{} },
                         present: {$sum:"$presented"}
                     }
+                },
+                {
+                    $sort:{
+                        _id:1
+                    }
                 }
             ]
         )
@@ -291,9 +291,15 @@ export const getAttendancePercent = async (req,res) =>{
         for(let student of data){
             student.register = student._id.register
             student.name = student._id.firstName + " " +student._id.lastName
+            student.Total = student.total
+            student.Present = student.present
             student.percent = student.present/student.total * 100
             delete student._id
+            delete student.total
+            delete student.present
         }
+
+        console.log(data)
         
         res.status(200).json(data)
         
