@@ -50,11 +50,13 @@ export const getMasterAttendance = async (req, res) => {
         //Get Current Batch Start and End Date
         let sem_dates = await SemesterMetadataModel.find({}, { batch: 1, sem: 1, semester: 1 }).sort({ date: -1 }).limit(3);
 
+        console.log(sem_dates)
         //Overall Start and End Date Calculation
         let start_date = new Date();
         let end_date = new Date('01-01-2070');
-
+        sem_dates = sem_dates.map(item => item.toObject())
         for (let i of sem_dates) {
+            console.log("zerrrrr", i.semester.begin)
             if (start_date > i.semester.begin) {
                 start_date = i.semester.begin
             }
@@ -72,7 +74,7 @@ export const getMasterAttendance = async (req, res) => {
         console.log(end_date);
 
         //Get Periods from MasterTimetable
-        let result = await MasterTimetableModel.find({ branch: branch, facultyId: facultyId, date: { $gte: start_date, $lte: end_date }, freeze: { $gte: today } }, { date: 1, courseId: 1 }).populate("courseId", { courseId: 1, courseCode: 1 })
+        let result = await MasterTimetableModel.find({ branch: branch, facultyId: facultyId, date: { $gte: start_date, $lte: end_date } }, { date: 1, courseId: 1, period:1, freeze:1 }).populate("courseId", { courseId: 1, courseCode: 1, batch:1, branch:1, semester:1 })
         await CurriculumModel.populate(result, { path: "courseId.courseId", select: { courseCode: 1, title: 1 } })
 
         //Regularize data for front-end
@@ -80,6 +82,9 @@ export const getMasterAttendance = async (req, res) => {
         for (let period of result) {
             period.courseCode = period.courseId.courseCode;
             period.courseName = period.courseId.courseId.title;
+            period.batch = period.courseId.batch;
+            period.branch = period.courseId.branch;
+            period.semester = period.courseId.semester;
             period.courseId = period.courseId._id;
         }
         console.log(result)
@@ -98,17 +103,16 @@ export const getAttendance = async (req, res) => {
         let { _id, courseId } = req.query
 
         //Fetch Attendance from if already done
-        let result = await AttendanceModel.find({ masterTimetableId: _id }, { studentId: 1, present: 1, onduty: 1 }).populate("studentId", { register: 1, firstName: 1, lastName: 1 })
-
+        let result = await AttendanceModel.find({ masterTimetableId: _id }, { studentId: 1, present: 1, onduty: 1 }).populate({path:"studentId", select:{ register: 1, firstName: 1, lastName: 1 } })
+        console.log(result)
         //If no Data, fetch from enrollment 
         if (result.length == 0) {
 
-            result = await EnrollmentModel.find({ courseId: courseId }, { _id: 0, studentId: 1 }).populate("studentId", { register: 1, firstName: 1, lastName: 1 })
-
+            result = await EnrollmentModel.find({ courseId: courseId }, { _id: 0, studentId: 1 }).populate({path:"studentId", select:{ register: 1, firstName: 1, lastName: 1 } })
+            
             //Regularize Data for front-end
             result = result.map(student => (student.toObject()));
             for (let student of result) {
-                console.log(student)
                 student.masterTimetableId = _id;
                 student.name = student.studentId.firstName + " " + student.studentId.lastName;
                 student.register = student.studentId.register
@@ -129,12 +133,38 @@ export const getAttendance = async (req, res) => {
 
         }
 
+        result.sort((a, b) => {
+            if (a.register < b.register) {
+                return -1;
+            }
+            if (a.register > b.register) {
+                return 1;
+            }
+            return 0;
+        })
+        
         res.status(200).json(result);
 
     } catch (err) { res.status(400).send("Request Failed: " + err.message); }
 
 }
 
+
+export const dropPeriod = async (req,res) => {
+
+    try{
+
+        let { _id } = req.query
+
+        await AttendanceModel.deleteMany({masterTimetableId:_id})
+
+        await MasterTimetableModel.deleteMany({_id:_id})
+
+        res.status(200).send("Delete Successful")
+
+    } catch(err) { res.status(400).send("Request Failed: " + err.message); }
+
+}
 
 //Completed
 export const postAttendance = async (req, res) => {

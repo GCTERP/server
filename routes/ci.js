@@ -2,7 +2,7 @@ import express from "express"
 import { getBatch, getBranchCache, getCurriculum, getElectives, getRegulation } from "../controllers/AdminController.js"
 
 
-import { demo, getAttendance, getAttendancePercent, getCourses, getMasterAttendance, getStaffTimetable, getStudentTimetable, postAttendance } from "../controllers/CIController.js"
+import { demo, dropPeriod, getAttendance, getAttendancePercent, getCourses, getMasterAttendance, getProfile, getStaffTimetable, getStudentTimetable, postAttendance, profileRequest } from "../controllers/CIController.js"
 
 const router = express.Router()
 
@@ -48,6 +48,7 @@ router.get("/curriculum", getCurriculum)
 router.get("/masterAttendance", getMasterAttendance);
 router.get("/attendance", getAttendance);
 router.post("/attendance", postAttendance);
+router.get("/dropPeriod", dropPeriod);
 router.get("/courses", getCourses);
 router.get("/attendancePercent", getAttendancePercent);
 router.get("/staffTimetable", getStaffTimetable);
