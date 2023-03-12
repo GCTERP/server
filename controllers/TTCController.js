@@ -51,7 +51,7 @@ export const dataload = async (req,res) => {
         // await EnrollmentModel.deleteMany({})
         // await CourseDetailsModel.deleteMany({})
 
-        const excel = XLSX.readFile("C:/Users/THIYANESH S/Downloads/data1.xlsx")
+        const excel = XLSX.readFile("C:/Users/THIYANESH S/Downloads/IT_Enrollment.xlsx")
 
         const source = excel.Sheets[excel.SheetNames[0]]
     
@@ -255,7 +255,7 @@ export const getTimetable = async (req,res) => {
         result.sems = sems
         
         //Get all Courses Registered from CourseDetails
-        let data = await CourseDetailsModel.find({branch:branch, $or:[{semester:sems[0].sem,batch:sems[0].batch},{semester:sems[1].sem,batch:sems[1].batch},{semester:sems[2].sem,batch:sems[2].batch}]}, {facultyId:1, batch:1, newSchedule:1, semester:1, schedule:1, courseCode:1}).populate("courseId", {_id:1,title:1}).populate("facultyId",{title:1, firstName:1, lastName:1})
+        let data = await CourseDetailsModel.find({branch:branch, $or:[{semester:sems[0].sem,batch:sems[0].batch},{semester:sems[1].sem,batch:sems[1].batch},{semester:sems[2].sem,batch:sems[2].batch}]}, {facultyId:1, batch:1, newSchedule:1, semester:1, schedule:1, courseCode:1, groupNo:1, type:1 }).populate("courseId", {_id:1,title:1}).populate("facultyId",{title:1, firstName:1, lastName:1})
         data = data.map(course => ( course.toObject() ))
         result.courses = []
         
@@ -265,6 +265,8 @@ export const getTimetable = async (req,res) => {
             console.log("course = ", course)
             course.courseName = course.courseId.title
             course.courseId = course.courseId._id
+            if(course.type == "practical" && course.courseName != "Mini Project" && course.courseName != "Project Work")
+                course.courseCode = course.courseCode + "-B" + course.groupNo
 
             if(course.courseName == "Mini Project"){
                 if(flag1==0)
@@ -629,13 +631,15 @@ export const postGroups = async (req,res) => {
 export const getdailyjob = async (req,res) => {
 
     try{
+
+        await MasterTimetableModel.deleteMany({});
         console.log(await CalendarModel.find({}).sort({date:1}))
         //await MasterTimetableModel.deleteMany({})
         let periods = []
-        let date1 = new Date(new Date('2023-02-15').toJSON().slice(0, 10))
+        let date1 = new Date(new Date('2023-02-01').toJSON().slice(0, 10))
             
         //Create Days for Feb...
-        for(let i=0;i<5;i++){
+        for(let i=0;i<10;i++){
             let date = new Date(new Date('2023-02-15').toJSON().slice(0, 10))
             date.setDate(date1.getDate()+i)
             console.log(i, date)
